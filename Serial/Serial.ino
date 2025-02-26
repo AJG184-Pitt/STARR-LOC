@@ -6,7 +6,7 @@ void loop() {
   // Check if data is available
   if (Serial.available() > 0) {
     // Wait a bit for the entire message to arrive
-    delay(100);
+    delay(50);
     
     // Read the whole string
     String inputString = "";
