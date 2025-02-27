@@ -13,7 +13,7 @@ Stepper stepper2(STEPPER_STEPS, 8, 10, 9, 11);
 
 void setup() {
   stepper1.setSpeed(200);
-  stepper2.setSpeed(200);  
+  stepper2.setSpeed(200);
   Serial.begin(9600);
 }
 
@@ -22,7 +22,7 @@ void loop() {
   if (Serial.available() > 0) {
     // Wait a bit for the entire message to arrive
     delay(50);
-    
+
     // Read the whole string
     String inputString = "";
     while (Serial.available() > 0) {
@@ -30,13 +30,13 @@ void loop() {
       inputString += inChar;
       delay(50);
     }
-    
+
     // Parse the string for x and y values
     int spaceIndex = inputString.indexOf(' ');
     if (spaceIndex != -1) {
       float x_dir = inputString.substring(0, spaceIndex).toFloat();
       float y_dir = inputString.substring(spaceIndex + 1).toFloat();
-      
+
       // Echo back what was received
       Serial.print("Received x: ");
       Serial.print(x_dir, 4);
@@ -49,7 +49,7 @@ void loop() {
 
       float deltaX = x_dir - prevX;
       float deltaY = y_dir - prevY;
-      
+
       if (deltaX != 0) {
         stepper1.step(deltaX * GEAR_RATIO);
       }
@@ -57,7 +57,7 @@ void loop() {
       if (deltaY != 0) {
         stepper2.step(deltaY * GEAR_RATIO);
       }
-      
+
       prevX = x_dir;
       prevY = y_dir;
     } else {
