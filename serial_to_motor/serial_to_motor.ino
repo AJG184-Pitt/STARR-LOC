@@ -1,20 +1,39 @@
 #include <Stepper.h>
 
-int pinA = 2;   // Connected to CLK on KY-040
-int pinB = 3;   // Connected to DT on KY-040
-int pinC = A0;  // Connected to analog pin
-
+// Motor 1 (X-axis) uses Stepper library
 const int STEPPER_STEPS = 32;
 const int GEAR_RATIO = 64;
+const float stepsPerDegree = (STEPPER_STEPS * GEAR_RATIO) / 360.0; // ~5.69 steps per degree
 
-// Need to multiply steps by 64 due to the gear ratio
+// Motor 2 (Y-axis) uses direct control pins
+const int dirPin = 8;
+const int stepPin = 9;
+
+// User settings
+const float degreesPerStep = 10.0; // Same for both motors
+
+// Timing variables for direct pulse generation
+const int stepPulseWidth = 1000;  // Pulse width in microseconds
+const int stepPulseDelay = 1500;  // Microseconds between pulses
+
+// Setup stepper motor with Stepper library
 Stepper stepper1(STEPPER_STEPS, 4, 6, 5, 7);
-Stepper stepper2(STEPPER_STEPS, 8, 10, 9, 11);
+
+// Variables to track positions
+float prevX = 0;
+float prevY = 0;
 
 void setup() {
+  // Setup for X-axis motor
   stepper1.setSpeed(200);
-  stepper2.setSpeed(200);
+
+  // Setup for Y-axis motor
+  pinMode(dirPin, OUTPUT);
+  pinMode(stepPin, OUTPUT);
+  digitalWrite(stepPin, LOW);
+  
   Serial.begin(9600);
+  Serial.println("Dual motor controller ready. Send 'x y' values.");
 }
 
 void loop() {
@@ -28,7 +47,6 @@ void loop() {
     while (Serial.available() > 0) {
       char inChar = (char)Serial.read();
       inputString += inChar;
-      delay(50);
     }
 
     // Parse the string for x and y values
@@ -39,25 +57,64 @@ void loop() {
 
       // Echo back what was received
       Serial.print("Received x: ");
-      Serial.print(x_dir, 4);
+      Serial.print(x_dir);
       Serial.print(", y: ");
-      Serial.println(y_dir, 4);
+      Serial.println(y_dir);
 
       // Move stepper motors based on serial information
-      float prevX = 0;
-      float prevY = 0;
-
       float deltaX = x_dir - prevX;
       float deltaY = y_dir - prevY;
 
+      // Handle X motor (using Stepper library)
       if (deltaX != 0) {
-        stepper1.step(deltaX * GEAR_RATIO);
+        // Convert deltaX to degrees and then to steps
+        float degreesToMoveX = abs(deltaX) * degreesPerStep;
+        int stepsToMoveX = round(degreesToMoveX * stepsPerDegree);
+        
+        // Set proper direction
+        if (deltaX > 0) {
+          stepper1.step(stepsToMoveX);
+        } else {
+          stepper1.step(-stepsToMoveX);
+        }
+        
+        Serial.print("X moved: ");
+        Serial.print(degreesToMoveX);
+        Serial.println(" degrees");
       }
 
+      // Handle Y motor (using direct control)
       if (deltaY != 0) {
-        stepper2.step(deltaY * GEAR_RATIO);
+        // Set direction based on movement direction
+        if (deltaY > 0) {
+          digitalWrite(dirPin, HIGH); // Clockwise
+        } else {
+          digitalWrite(dirPin, LOW);  // Counter-clockwise
+        }
+
+        // Calculate degrees to move
+        float degreesToMoveY = abs(deltaY) * degreesPerStep;
+        
+        // Convert degrees to motor steps
+        int totalSteps = round(degreesToMoveY * stepsPerDegree);
+
+        // Take steps with careful timing
+        for (int i = 0; i < totalSteps; i++) {
+          // Generate one step pulse
+          digitalWrite(stepPin, HIGH);
+          delayMicroseconds(stepPulseWidth);
+          digitalWrite(stepPin, LOW);
+          
+          // Delay between pulses
+          delayMicroseconds(stepPulseDelay);
+        }
+        
+        Serial.print("Y moved: ");
+        Serial.print(degreesToMoveY);
+        Serial.println(" degrees");
       }
 
+      // Update stored positions
       prevX = x_dir;
       prevY = y_dir;
     } else {
