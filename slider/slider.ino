@@ -4,7 +4,7 @@ const int sliderPin = A0;
 const int stepperStepsPerRevolution = 32;
 const int minStepThreshold = 5; // Minimum steps to move
 
-Stepper stepper(stepperStepsPerRevolution, 8, 9, 10, 11);
+Stepper stepper(stepperStepsPerRevolution, 4, 6, 5, 7);
 
 int currentPosition = 0;
 
@@ -23,7 +23,7 @@ void loop() {
   int stepsToMove = targetPosition - currentPosition;
   
   if (abs(stepsToMove) > minStepThreshold) {        
-    stepper.step(stepsToMove);
+    stepper.step(stepsToMove * 64);
     currentPosition += stepsToMove;
   }
 }
