@@ -2,7 +2,10 @@ import datetime
 from satellite import Satellite
 from observer import Observer
 import sgp4_basic as sgpb
+import pytz
+from sgp4.conveniences import jday, sat_epoch_datetime
 
+import time
 
 
 # load tle data
@@ -15,23 +18,51 @@ satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in tle_data]
 
 # Observer at the Cathedral of Learning
 # (Assuming observer is at the altitude of the geodetic estimation)
-observer = Observer(40.444067, -79.953609, 0)
+observer = Observer(40.444, -79.953, 300)
 
-r = satellites[0].getPosAtTime(datetime.datetime.now())
-print(f"Current Position of satellite {satellites[0].name} is (x={r[0]}, y={r[1]}, z={r[2]}) [km].")
+
+et = pytz.timezone('US/Eastern')
+local_time = datetime.datetime.now(et)
+utc_time = local_time.astimezone(pytz.utc)
+#print(f"time now: {local_time}")
+#print(f"time utc: {utc_time}")
+
+
+r = satellites[0].getPosAtTime(utc_time)
+#print(f"Current Position of satellite {satellites[0].name} is (x={r[0]}, y={r[1]}, z={r[2]}) [km].")
 
 
 # Find satellite with name "AO-07"
-sat = next((sat for sat in satellites if sat.name == "Taurus 1"), None)
+sat = next((sat for sat in satellites if sat.name == "ISS"), None)
 # Check if overhead
 if sat != None:
-    print(f"Satellite {sat.name} is overhead = {sat.isOverhead(observer, datetime.datetime.now())}")
+    #print(f"Satellite {sat.name} is overhead = {sat.isOverhead(observer, utc_time)}")
+    pass
 
 
 iss = next((sat for sat in satellites if sat.name == "ISS"), None)
 if iss != None:
-    print(f"Next flyover is: {sat.nextOverhead(observer, datetime.datetime.now())}")
+    overhead = iss.nextOverhead(observer, utc_time)
+    start = time.time()
+    print(f"Next flyover of the ISS is: {overhead.astimezone(et)}")
+    print(f"Next overhead duration of the ISS : {iss.overheadDuration(observer, utc_time)}")
+    end = time.time()
+
+else:
+    print("NONE")
 
 
+#print("The time of execution of above program is:", (end-start) * 10**3, "ms")
+
+
+
+start = time.time()
+
+iss.isOverhead(observer, utc_time)
+iss.getAngleFrom(observer, utc_time)
+
+end = time.time()
+
+#print("The time of execution isOverhead is:", (end-start) * 10**3, "ms")
 
 
