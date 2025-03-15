@@ -12,13 +12,19 @@ class Satellite:
         self.name = satellite_name
         self.tle1 = tle_line1
         self.tle2 = tle_line2
+        self.last_pos = 0
+        self.observer_angle = 0
+        self.overhead = False
+        self.next_overhead_instance = 0
+        self.next_overhead_duration = 0
+
 
     def getPosAtTime(self, date_time: datetime.datetime):
         """
         Get the ECI coordinates of the satellite. Returns Tuple (x, y, z) in km
         """
-
-        return sgpb.sgp4_run(self.tle1, self.tle2, date_time)
+        self.last_pos = sgpb.sgp4_run(self.tle1, self.tle2, date_time)
+        return self.last_pos
 
     def getAngleFrom(self, observer: Observer, date_time):
         """
@@ -29,16 +35,18 @@ class Satellite:
         # Convert to meters
         r = tuple(i*1000 for i in r)
 
-        return eci2aer(r[0], r[1], r[2], observer.lat, observer.lon, observer.alt, date_time, deg=True)
+        self.observer_angle = eci2aer(r[0], r[1], r[2], observer.lat, observer.lon, observer.alt, date_time, deg=True)
+        return self.observer_angle
         
 
     def isOverhead(self, observer, date_time):
         """
         Check if the satellite is overhead
         """
-        angle = self.getAngleFrom(observer, date_time)
+        angle =  self.getAngleFrom(observer, date_time)
         #print(f"Angle = {angle}, time = {date_time}")
-        return (angle[1] >= 38)
+        self.overhead = (angle[1] >= 38)
+        return self.overhead
 
     def nextOverhead(self, observer, date_time):
         """
@@ -50,7 +58,8 @@ class Satellite:
             #print(f"trying time: {date_time}")
 
 
-        return date_time#.astimezone(pytz.timezone('UTC'))
+        self.next_overhead_instance = date_time#.astimezone(pytz.timezone('UTC'))
+        return self.next_overhead_instance
         
 
     def overheadDuration(self, observer, date_time, **kwargs):
@@ -85,7 +94,8 @@ class Satellite:
         time = divmod(time_diff.total_seconds(), 60)
         minutes, seconds = time[0], time[1]
 
-        return (minutes, seconds)
+        self.next_overhead_duration = (minutes, seconds)
+        return self.next_overhead_duration
                
 
 
