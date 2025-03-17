@@ -1,7 +1,7 @@
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QComboBox,
                             QLineEdit, QLabel, QGridLayout, QWidget)
-from PyQt6.QtCore import QSize
+from PyQt6.QtCore import QSize, Qt
 
 import sys
 sys.path.append('../sgp4')
@@ -92,8 +92,16 @@ class MainWindow(QMainWindow):
         self.e1 = QLineEdit()
         self.e2 = QLineEdit()
         self.e3 = QLineEdit()
+        self.e4 = QLineEdit()
+        self.e5 = QLineEdit()
 
-        edit_lines = [self.e1, self.e2, self.e3]
+        self.label1 = QLabel("Names:")
+        self.label2 = QLabel("Values:")
+        self.label3 = QLabel("Items")
+        self.label4 = QLabel("Widhts")
+        self.label5 = QLabel("Overhead")
+
+        edit_lines = [self.e1, self.e2, self.e3, self.e4, self.e5]
 
         for line in edit_lines:
             line.setStyleSheet("""
@@ -117,22 +125,29 @@ class MainWindow(QMainWindow):
         self.e3.setFixedWidth(390)
         self.e3.setFixedHeight(40)
 
+        self.e4.setFixedWidth(390)
+        self.e4.setFixedHeight(40)
+
+        self.e5.setFixedWidth(390)
+        self.e5.setFixedHeight(40)
+
         # Line edits and combo box
-        grid.addWidget(self.combo_box, 2, 0)
+        grid.addWidget(self.combo_box, 5, 0)
+
+        grid.addWidget(self.label1, 0, 1, alignment=Qt.AlignmentFlag.AlignBottom)
         grid.addWidget(self.e1, 1, 1)
-        grid.addWidget(self.e2, 2, 1)
-        grid.addWidget(self.e3, 3, 1)
 
-        # self.e1.setText("Temp")
-        # self.e2.setText("Temp")
-        # self.e3.setText("Temp")
+        grid.addWidget(self.label2, 2, 1, alignment=Qt.AlignmentFlag.AlignBottom)
+        grid.addWidget(self.e2, 3, 1)
 
-        # self.combo_box.currentIndexChanged.connect(self.update_tle_data(satellites))
+        grid.addWidget(self.label3, 4, 1, alignment=Qt.AlignmentFlag.AlignBottom)
+        grid.addWidget(self.e3, 5, 1)
 
-    def update_tle_data(self, satellites):
-        tle1, tle2 = satellites.tle1, satellites.tle2
-        self.e1.setText(tle1)
-        self.e2.setText(tle2)
+        grid.addWidget(self.label4, 6, 1, alignment=Qt.AlignmentFlag.AlignBottom)
+        grid.addWidget(self.e4, 7, 1)
+
+        grid.addWidget(self.label5, 8, 1, alignment=Qt.AlignmentFlag.AlignBottom)
+        grid.addWidget(self.e5, 9, 1)
 
     def sat_data(self, satellites, selected, observer, local_time):
         # Get data from the satellite object
@@ -140,11 +155,18 @@ class MainWindow(QMainWindow):
         e2_data = satellites[selected].getAngleFrom(observer, local_time)[1][0]
         e2_data = str(e2_data)
         e3_data = satellites[selected].tle2
+        e4_data = satellites[selected].nextOverhead(observer, local_time)
+        e5_data = satellites[selected].isOverhead(observer, local_time)
+        e5_data = str(e5_data)
+
+        e4_data = e4_data.strftime("%Y-%m-%d %H:%M:%S")
 
         # Pass satellite data into text boxes
         self.e1.setText(e1_data)
         self.e2.setText(e2_data)
         self.e3.setText(e3_data)
+        self.e4.setText(e4_data)
+        self.e5.setText(e5_data)
 
 def main():
     # satellites = Satellite("Sat1", "32", "40")
