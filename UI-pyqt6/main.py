@@ -36,8 +36,8 @@ class MainWindow(QMainWindow):
         central_widget.setStyleSheet(f"""
             QWidget {{
                 background-image: url({background_image});            
+                background-repeat: no-repeat;
                 background-position: center;
-                background-size: contain;
             }}
         """)
         self.setCentralWidget(central_widget)
