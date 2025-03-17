@@ -86,9 +86,7 @@ class MainWindow(QMainWindow):
         self.combo_box.setFixedHeight(40)
 
         # Call method for selected satellite
-        selected = self.combo_box.currentIndex()
-        # local_time = datetime.datetime.now()
-        self.combo_box.activated.connect(lambda: self.sat_data(satellites, selected, observer, local_time))
+        self.combo_box.currentIndexChanged.connect(lambda: self.sat_data(satellites, self.combo_box.currentIndex(), observer, local_time))
 
         # Create entry widgets
         self.e1 = QLineEdit()
@@ -129,7 +127,6 @@ class MainWindow(QMainWindow):
         # self.e2.setText("Temp")
         # self.e3.setText("Temp")
 
-
         # self.combo_box.currentIndexChanged.connect(self.update_tle_data(satellites))
 
     def update_tle_data(self, satellites):
@@ -138,11 +135,13 @@ class MainWindow(QMainWindow):
         self.e2.setText(tle2)
 
     def sat_data(self, satellites, selected, observer, local_time):
+        # Get data from the satellite object
         e1_data = satellites[selected].name
         e2_data = satellites[selected].getAngleFrom(observer, local_time)[1][0]
         e2_data = str(e2_data)
         e3_data = satellites[selected].tle2
 
+        # Pass satellite data into text boxes
         self.e1.setText(e1_data)
         self.e2.setText(e2_data)
         self.e3.setText(e3_data)
