@@ -24,7 +24,7 @@ class MainWindow(QMainWindow):
 
         et = pytz.timezone("US/Eastern")
         local_time = datetime.datetime.now(et)
-        utc_time = local_time.astimezone(pytz.utc)
+        # utc_time = local_time.astimezone(pytz.utc)
                 
         # Set window title and size constraints
         self.setWindowTitle("PyQt6 Application for On-Device UI")
@@ -86,8 +86,9 @@ class MainWindow(QMainWindow):
         self.combo_box.setFixedHeight(40)
 
         # Call method for selected satellite
-        selected = self.combo_box.currentIndexChanged
-        self.combo_box.activated.connect(lambda: self.sat_data(satellites, selected))
+        selected = self.combo_box.currentIndex()
+        # local_time = datetime.datetime.now()
+        self.combo_box.activated.connect(lambda: self.sat_data(satellites, selected, observer, local_time))
 
         # Create entry widgets
         self.e1 = QLineEdit()
@@ -136,14 +137,15 @@ class MainWindow(QMainWindow):
         self.e1.setText(tle1)
         self.e2.setText(tle2)
 
-    def sat_data(self, satellites, selected):
+    def sat_data(self, satellites, selected, observer, local_time):
         e1_data = satellites[selected].name
-        e2_data = satellites[selected].tle1
+        e2_data = satellites[selected].getAngleFrom(observer, local_time)[1][0]
+        e2_data = str(e2_data)
         e3_data = satellites[selected].tle2
 
-        e1.setText(e1_data)
-        e2.setText(e2_data)
-        e3.setText(e3_data)
+        self.e1.setText(e1_data)
+        self.e2.setText(e2_data)
+        self.e3.setText(e3_data)
 
 def main():
     # satellites = Satellite("Sat1", "32", "40")
