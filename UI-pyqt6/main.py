@@ -85,6 +85,10 @@ class MainWindow(QMainWindow):
         self.combo_box.setFixedWidth(390)
         self.combo_box.setFixedHeight(40)
 
+        # Call method for selected satellite
+        selected = self.combo_box.currentIndexChanged
+        self.combo_box.activated.connect(lambda: self.sat_data(satellites, selected))
+
         # Create entry widgets
         self.e1 = QLineEdit()
         self.e2 = QLineEdit()
@@ -113,7 +117,6 @@ class MainWindow(QMainWindow):
 
         self.e3.setFixedWidth(390)
         self.e3.setFixedHeight(40)
-        self.e3.setText("Temp")
 
         # Line edits and combo box
         grid.addWidget(self.combo_box, 2, 0)
@@ -121,8 +124,10 @@ class MainWindow(QMainWindow):
         grid.addWidget(self.e2, 2, 1)
         grid.addWidget(self.e3, 3, 1)
 
-        self.e1.setText("Temp")
-        self.e2.setText("Temp")
+        # self.e1.setText("Temp")
+        # self.e2.setText("Temp")
+        # self.e3.setText("Temp")
+
 
         # self.combo_box.currentIndexChanged.connect(self.update_tle_data(satellites))
 
@@ -130,6 +135,15 @@ class MainWindow(QMainWindow):
         tle1, tle2 = satellites.tle1, satellites.tle2
         self.e1.setText(tle1)
         self.e2.setText(tle2)
+
+    def sat_data(self, satellites, selected):
+        e1_data = satellites[selected].name
+        e2_data = satellites[selected].tle1
+        e3_data = satellites[selected].tle2
+
+        e1.setText(e1_data)
+        e2.setText(e2_data)
+        e3.setText(e3_data)
 
 def main():
     # satellites = Satellite("Sat1", "32", "40")
