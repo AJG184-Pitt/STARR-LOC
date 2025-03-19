@@ -80,5 +80,5 @@ void loop() {
     Serial.println(totalSteps);
   }
   
-  delay(200); // Delay to allow motor to complete movement
+  delay(100); // Delay to allow motor to complete movement
 }
