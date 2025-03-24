@@ -11,4 +11,8 @@ ser.write(data.encode())
 
 time.sleep(0.5)
 
+ser.readline().decode()
+
+time.sleep(0.5)
+
 ser.close()
