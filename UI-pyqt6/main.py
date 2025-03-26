@@ -1,6 +1,6 @@
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QPixmap
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QComboBox,
-                            QLineEdit, QLabel, QGridLayout, QWidget)
+                            QLineEdit, QLabel, QGridLayout, QWidget, QVBoxLayout)
 from PyQt6.QtCore import QSize, Qt
 
 import sys
@@ -96,12 +96,25 @@ class MainWindow(QMainWindow):
         self.e5 = QLineEdit()
         self.e6 = QLineEdit()
 
+        # Create interactable icons
+        label_image = QLabel(central_widget)
+        label_image.setGeometry(10, 400, 64,64)
+        pixmap = QPixmap('Assets/auto.png')
+        pixmap = pixmap.scaled(64,64)
+        label_image.setPixmap(pixmap)
+
+        label_image_2 = QLabel(central_widget)
+        label_image_2.setGeometry(100, 400, 64, 64)
+        pixmap2 = QPixmap('Assets/manual.png')
+        pixmap2 = pixmap2.scaled(64,64)
+        label_image_2.setPixmap(pixmap2)
+
+        # Labels for satellite information
         self.label1 = QLabel("Current Angle:")
         self.label2 = QLabel("Next Satellite Overhead Period:")
         self.label3 = QLabel("Current Overhead Duration:")
         self.label4 = QLabel("Max Angle:")
         self.label5 = QLabel("GPS Location:")
-        self.label6 = QLabel("Frequency:")
 
         edit_lines = [self.e1, self.e2, self.e3, self.e4, self.e5, self.e6]
 
@@ -154,9 +167,6 @@ class MainWindow(QMainWindow):
         grid.addWidget(self.label5, 8, 1, alignment=Qt.AlignmentFlag.AlignBottom)
         grid.addWidget(self.e5, 9, 1)
 
-        grid.addWidget(self.label6, 10, 1, alignment=Qt.AlignmentFlag.AlignBottom)
-        grid.addWidget(self.e6, 11, 1)
-
     def sat_data(self, satellites, selected, observer, local_time):
         # Get data from the satellite object
         e1_data = satellites[selected].getAngleFrom(observer, local_time)
@@ -181,7 +191,6 @@ class MainWindow(QMainWindow):
         self.e3.setText(e3_data)
         self.e4.setText(e4_data)
         self.e5.setText(e5_data)
-        self.e6.setText("temp")
 
 def main():
     # satellites = Satellite("Sat1", "32", "40")
