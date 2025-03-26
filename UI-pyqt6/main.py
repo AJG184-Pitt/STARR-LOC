@@ -1,6 +1,6 @@
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QPixmap
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QComboBox,
-                            QLineEdit, QLabel, QGridLayout, QWidget)
+                            QLineEdit, QLabel, QGridLayout, QWidget, QVBoxLayout)
 from PyQt6.QtCore import QSize, Qt
 
 import sys
@@ -97,14 +97,29 @@ class MainWindow(QMainWindow):
         self.e3 = QLineEdit()
         self.e4 = QLineEdit()
         self.e5 = QLineEdit()
+        self.e6 = QLineEdit()
 
-        self.label1 = QLabel("Names:")
-        self.label2 = QLabel("Values:")
-        self.label3 = QLabel("Items")
-        self.label4 = QLabel("Widhts")
-        self.label5 = QLabel("Overhead")
+        # Create interactable icons
+        label_image = QLabel(central_widget)
+        label_image.setGeometry(10, 400, 64,64)
+        pixmap = QPixmap('Assets/auto.png')
+        pixmap = pixmap.scaled(64,64)
+        label_image.setPixmap(pixmap)
 
-        edit_lines = [self.e1, self.e2, self.e3, self.e4, self.e5]
+        label_image_2 = QLabel(central_widget)
+        label_image_2.setGeometry(100, 400, 64, 64)
+        pixmap2 = QPixmap('Assets/manual.png')
+        pixmap2 = pixmap2.scaled(64,64)
+        label_image_2.setPixmap(pixmap2)
+
+        # Labels for satellite information
+        self.label1 = QLabel("Current Angle:")
+        self.label2 = QLabel("Next Satellite Overhead Period:")
+        self.label3 = QLabel("Current Overhead Duration:")
+        self.label4 = QLabel("Max Angle:")
+        self.label5 = QLabel("GPS Location:")
+
+        edit_lines = [self.e1, self.e2, self.e3, self.e4, self.e5, self.e6]
 
         for line in edit_lines:
             line.setStyleSheet("""
@@ -134,6 +149,9 @@ class MainWindow(QMainWindow):
         self.e5.setFixedWidth(390)
         self.e5.setFixedHeight(40)
 
+        self.e6.setFixedWidth(390)
+        self.e6.setFixedHeight(40)
+
         # Line edits and combo box
         grid.addWidget(self.combo_box, 5, 0)
 
@@ -154,16 +172,22 @@ class MainWindow(QMainWindow):
 
     def sat_data(self, satellites, selected, observer, local_time):
         # Get data from the satellite object
-        e1_data = satellites[selected].name
-        e2_data = satellites[selected].getAngleFrom(observer, local_time)[1][0]
-        e2_data = str(e2_data)
-        e3_data = satellites[selected].tle2
-        e4_data = satellites[selected].nextOverhead(observer, local_time)
-        e5_data = satellites[selected].isOverhead(observer, local_time)
-        e5_data = str(e5_data)
+        e1_data = satellites[selected].getAngleFrom(observer, local_time)
+        
+        e2_data = satellites[selected].nextOverhead(observer, local_time)
+        e3_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e2_data)
+        # e4_data = satellites[selected].getAngleFrom(observer, local_time)
+        e4_data = satellites[selected].name
 
-        e4_data = e4_data.strftime("%Y-%m-%d %H:%M:%S")
-
+        e5_data = str(observer.lat) + " , " + str(observer.lon) + " , " + str(observer.alt)
+        
+        # String formatting for displaying results
+        e1_data = "AZ: " + str(e1_data[0][0]) + " , " + "EL: " + str(e1_data[1][0])
+        e2_data = e2_data.strftime("%Y-%m-%d %H:%M:%S")
+        e3_data = str(e3_data)
+        e4_data = str(e4_data)
+        # e5_data = str(e5_data)
+        
         # Pass satellite data into text boxes
         self.e1.setText(e1_data)
         self.e2.setText(e2_data)
