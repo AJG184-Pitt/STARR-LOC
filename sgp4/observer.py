@@ -14,10 +14,10 @@ class Observer:
             with open(file_path, 'r') as file:
                 lines = file.readlines()
             
-            x = line[0].split(" ")
+            x = lines[0].split(" ")
             self.lat = float(x[0])
             self.lon = float(x[1])
-            self.alt = int(x[2])
+            self.alt = float(x[2])
 
     def getEciPos(self, date_time):
         """

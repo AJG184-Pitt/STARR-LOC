@@ -47,6 +47,6 @@ def data_received(data):
             print("No active file to write to\n")
    
 
-
+print("Starting Bluetooth server")
 s = BluetoothServer(data_received)
 pause()
