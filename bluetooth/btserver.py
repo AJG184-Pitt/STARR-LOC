@@ -1,8 +1,8 @@
 from bluedot.btcomm import BluetoothServer
-from signal import pause
+import signal
 import io
 
-import sys
+import os
 
 current_file = None
 
@@ -11,7 +11,6 @@ def data_received(data):
     
     global current_file
     text = io.StringIO(data)
-    
 
     while True:
         line = text.readline()
@@ -47,6 +46,19 @@ def data_received(data):
             print("No active file to write to\n")
    
 
+def alarm_handler(signum, frame):
+    print("Alarm handler called")
+    if current_file:
+        current_file.close()
+    
+    print("Bluetooth server stopped")
+    os._exit(0)
+
+# Start alarm to kill server after 60 seconds
 print("Starting Bluetooth server")
+signal.signal(signal.SIGALRM, alarm_handler)
+signal.alarm( 60 )
+
+# Start the server and wait for a connection
 s = BluetoothServer(data_received)
-pause()
+signal.pause()

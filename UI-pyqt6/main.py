@@ -174,7 +174,7 @@ class MainWindow(QMainWindow):
 
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_F10:
-            print("Return key pressed2")
+            self.startBtServer()
 
     def sat_data(self, satellites, selected, observer, local_time):
         # Get data from the satellite object
@@ -214,6 +214,8 @@ class MainWindow(QMainWindow):
     
         if errors != None:
             print(f"{errors.decode()}")
+
+        print("Bluetooth server returned to main loop")
 
             
         self.tle_data = sgpb.read_tle_file(self.tle_file_path)
