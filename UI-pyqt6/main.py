@@ -11,16 +11,19 @@ from observer import Observer
 from satellite import Satellite
 import pytz, datetime
 
+import subprocess
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
         # Information gathering
-        file_path = "../sgp4/tle.txt"
+        file_path = "../bluetooth/tle.data"
         tle_data = sgpb.read_tle_file(file_path)
         satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in tle_data]
         
-        observer = Observer(40.44, -79.95, 300)
+        observer = Observer(file_path="../bluetooth/gps.data")
+        #observer = Observer(40.44, -79.95, 300)
 
         et = pytz.timezone("US/Eastern")
         local_time = datetime.datetime.now(et)
@@ -168,6 +171,26 @@ class MainWindow(QMainWindow):
         self.e4.setText(e4_data)
         self.e5.setText(e5_data)
 
+
+    def startBtServer():
+        process = subprocess.Popen(['python3', '../bluetooth/btserver.py'],
+                                  stdin=None,
+                                  stdout=None,
+                                  stderr=subprocess.PIPE)
+
+        output, errors = process.communicate(input="")
+        if output != None:
+            print(f"{output.decode()}")
+    
+        if errors != None:
+            print(f"{errors.decode()}")
+
+            
+        tle_data = sgpb.read_tle_file(file_path)
+        satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in tle_data]
+        observer = Observer(file_path="../bluetooth/gps.data")
+
+
 def main():
     # satellites = Satellite("Sat1", "32", "40")
 
@@ -176,5 +199,8 @@ def main():
     window.show()
     sys.exit(app.exec())
 
+
+
 if __name__ == '__main__':
+
     main()
