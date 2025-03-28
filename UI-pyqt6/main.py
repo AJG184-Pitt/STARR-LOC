@@ -18,13 +18,17 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         # Information gathering
-        self.tle_file_path = "../bluetooth/tle.data"
-        self.gps_file_path = "../bluetooth/gps.data"
-        self.tle_data = sgpb.read_tle_file(self.tle_file_path)
-        self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
+        # self.tle_file_path = "../bluetooth/tle.data"
+        # self.gps_file_path = "../bluetooth/gps.data"
+        # self.tle_data = sgpb.read_tle_file(self.tle_file_path)
+
+        file_path = "../sgp4/tle.txt"
+        tle_data = sgpb.read_tle_file(file_path)
         
-        observer = Observer(file_path=self.gps_file_path)
-        #observer = Observer(40.44, -79.95, 300)
+        self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in tle_data]
+        
+        # observer = Observer(file_path=self.gps_file_path)
+        observer = Observer(40.444, -79.953, 300)
 
         et = pytz.timezone("US/Eastern")
         local_time = datetime.datetime.now(et)
@@ -171,9 +175,9 @@ class MainWindow(QMainWindow):
         grid.addWidget(self.label5, 8, 1, alignment=Qt.AlignmentFlag.AlignBottom)
         grid.addWidget(self.e5, 9, 1)
 
-    def keyPressEvent(self, event: QKeyEvent):
-        if event.key() == Qt.Key.Key_F10:
-            self.startBtServer()
+    # def keyPressEvent(self, event: QKeyEvent):
+    #     if event.key() == Qt.Key.Key_F10:
+    #         self.startBtServer()
 
     def sat_data(self, satellites, selected, observer, local_time):
         # Get data from the satellite object
@@ -200,25 +204,25 @@ class MainWindow(QMainWindow):
         self.e4.setText(e4_data)
         self.e5.setText(e5_data)
 
-    def startBtServer(self):
-        process = subprocess.Popen(['python3', '../bluetooth/btserver.py'],
-                                  stdin=None,
-                                  stdout=None,
-                                  stderr=subprocess.PIPE)
+    # def startBtServer(self):
+    #     process = subprocess.Popen(['python3', '../bluetooth/btserver.py'],
+    #                               stdin=None,
+    #                               stdout=None,
+    #                               stderr=subprocess.PIPE)
 
-        output, errors = process.communicate(input="")
-        if output != None:
-            print(f"{output.decode()}")
+    #     output, errors = process.communicate(input="")
+    #     if output != None:
+    #         print(f"{output.decode()}")
     
-        if errors != None:
-            print(f"{errors.decode()}")
+    #     if errors != None:
+    #         print(f"{errors.decode()}")
 
-        print("Bluetooth server returned to main loop")
+    #     print("Bluetooth server returned to main loop")
 
             
-        self.tle_data = sgpb.read_tle_file(self.tle_file_path)
-        self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
-        self.observer = Observer(file_path=self.gps_file_path)
+    #     self.tle_data = sgpb.read_tle_file(self.tle_file_path)
+    #     self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
+    #     self.observer = Observer(file_path=self.gps_file_path)
 
 
 def main():
