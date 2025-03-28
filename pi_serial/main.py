@@ -1,18 +1,23 @@
 from serial import Serial
 import time
 
-ser = Serial('/dev/ttyACM0', 9600, timeout=1)
-# ser = Serial('/dev/ttyS0', 9600, timeout=1)
-time.sleep(0.5)
+ser = Serial('/dev/ttyACM0', 115200, timeout=1)
+time.sleep(20)
 
-data = "30 30\n"
+data1 = "30"
 
-ser.write(data.encode())
+ser.write(data1.encode())
 
-time.sleep(0.5)
+time.sleep(1)
+
+data2 = "30"
+
+ser.write(data2.encode())
+
+time.sleep(1)
 
 ser.readline().decode()
 
-time.sleep(0.5)
+time.sleep(1)
 
 ser.close()
