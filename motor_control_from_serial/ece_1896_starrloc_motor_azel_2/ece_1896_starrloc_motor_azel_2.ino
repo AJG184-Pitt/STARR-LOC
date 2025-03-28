@@ -51,17 +51,6 @@ void setup() {
     while(1) {}
   }
 
-  /*
-  delay(5000);
-  // gather data around the circle
-  int step_size = 50;
-  int az_steps = 5000/step_size;
-  for(int i = 0; i < az_steps; i++){
-    get_mag_data();
-    az_step_control(1,step_size);
-  }
-  */
-
   // calibrate
   level();
   north();
@@ -101,13 +90,20 @@ void setup() {
     az_step_adj = (az_target-az_deg_curr)/360*steps_per_rotation;
     el_step_adj = (el_target-el_deg_curr)/360*steps_per_rotation;
     // move to new position
-    az_step_control(az_step_adj<0,(uint16_t)round(abs(az_step_adj)));
-    el_step_control(el_step_adj<0,(uint16_t)round(abs(el_step_adj)));
+
+    bool az_dir = az_step_adj<0;
+    bool el_dir = el_step_adj<0;
+    uint16_t az_step_adj_abs = (uint16_t)round(abs(az_step_adj));
+    uint16_t el_step_adj_abs = (uint16_t)round(abs(el_step_adj));
+
+    //az_step_control(az_dir, az_step_adj_abs);
+    //el_step_control(el_dir, el_step_adj_abs);
+    az_el_step_control(az_dir, az_step_adj_abs, el_dir, el_step_adj_abs);
     // adjust internal markers
     az_deg_curr += (float)az_step_adj/steps_per_rotation*360;
     el_deg_curr += (float)el_step_adj/steps_per_rotation*360;
     az_step_curr += (float)az_step_adj;
-    el_step_curr += (float)el_step_adj;
+    el_step_curr += (float)el_step_adj;  // set direction of rotation
 
     delay(1000);
     Serial.println(get_az(),1);
@@ -121,10 +117,6 @@ void loop(){};
 
 // step az motor by certain amount in certain direction
 void az_step_control(bool dir, uint16_t num_steps){
-
-  /*Serial.print("STEPS: ");
-  Serial.print(num_steps);
-  Serial.print("\n");*/
 
   // set direction of rotation
   if(dir){
@@ -161,6 +153,33 @@ void el_step_control(bool dir, uint16_t num_steps){
     digitalWrite(el_step, LOW);
     delayMicroseconds(stepper_delay);
   }
+}
+
+void az_el_step_control(bool az_dir_val, uint16_t az_steps, bool el_dir_val, uint16_t el_steps){
+
+  // set direction of rotation
+  if(az_dir_val){ digitalWrite(az_dir, LOW);}
+  else{ digitalWrite(az_dir, HIGH);}
+
+  if(el_dir_val){ digitalWrite(el_dir, LOW);}
+  else{ digitalWrite(el_dir, HIGH);}
+
+  // move both at same time
+  while ((az_steps > 0) & (el_steps > 0)){
+    digitalWrite(az_step, HIGH);
+    digitalWrite(el_step, HIGH);
+    delayMicroseconds(stepper_delay);
+    digitalWrite(az_step, LOW);
+    digitalWrite(el_step, LOW);
+    delayMicroseconds(stepper_delay);
+    az_steps--;
+    el_steps--;
+  }
+
+  // move remaining axis
+  if(az_steps > 0) {az_step_control(az_dir_val, az_steps);}
+  if(el_steps > 0) {el_step_control(el_dir_val, el_steps);}
+
 }
 
 // handle magnetic compass
@@ -260,11 +279,6 @@ float get_az(){
   mag_x = (mag_x - (-61.5))/27.46;
   mag_y = (mag_y - (-198.96))/26.5;
 
-  Serial.print(mag_x);
-  Serial.print("\t");
-  Serial.print(mag_y);
-  Serial.print("\n");
-
   // get the elevation adjustment with the arctangent of atan(x,z)
   float az_meas = atan2(mag_x,mag_y)*180/3.1415 + 40;
 
@@ -300,10 +314,4 @@ void get_mag_data(){
     delay(10);
   }
 
-  /*Serial.print(mag_x);
-  Serial.print("\t");
-  Serial.print(mag_y);
-  Serial.print("\t");
-  Serial.print(mag_z);
-  Serial.print("\n");*/
 }
