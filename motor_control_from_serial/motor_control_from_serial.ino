@@ -1,82 +1,50 @@
 // libraries
 #include <string.h>
-#include <Wire.h>
-#include <SparkFun_MMC5983MA_Arduino_Library.h>
-
-// serial connection
-const int serial_rate = 9600;
+#include "mpu9250.h"
 
 // set up pin numbers
-const uint8_t az_step = 9;
-const uint8_t az_dir = 8;
-const uint8_t el_step = 11;
-const uint8_t el_dir = 10;
+const uint8_t az_step = 5;
+const uint8_t az_dir_pin = 4;
+const uint8_t el_step = 3;
+const uint8_t el_dir_pin = 2;
 
-// initialize magnetic compass
-SFE_MMC5983MA Mag;
-
-// function prototypes
-void az_step_control(bool, uint16_t);
-void el_step_control(bool, uint16_t);
-double get_az();
-void print_raw();
+/* Mpu9250 object, SPI bus, CS on pin 10 */
+bfs::Mpu9250 imu(&SPI, 10);
 
 void setup() {
 
-  // set up serial connection
-  Serial.begin(serial_rate);
-
-
-  // initialize magnetic compass
-  Wire.begin();
-
-    if (Mag.begin() == false)
-    {
-        Serial.println("MMC5983MA did not respond - check your wiring. Freezing.");
-        while (true)
-            ;
-    }
-  Mag.softReset();
-  Serial.println("MMC5983MA connected\n");
-
-
   // set up pins as input/output
   pinMode(az_step, OUTPUT);
-  pinMode(az_dir, OUTPUT);
+  pinMode(az_dir_pin, OUTPUT);
   pinMode(el_step, OUTPUT);
-  pinMode(el_dir, OUTPUT);
+  pinMode(el_dir_pin, OUTPUT);
 
   // initialize pins
   digitalWrite(az_step, LOW);
-  digitalWrite(az_dir, LOW);
+  digitalWrite(az_dir_pin, LOW);
   digitalWrite(el_step, LOW);
-  digitalWrite(el_dir, LOW);
+  digitalWrite(el_dir_pin, LOW);
 
-  // wait for user input
-  /*while(Serial.available() == 0){}
-  String user_input = Serial.readString();
-  double az_target = user_input.toDouble(); // (-180,180]*/
-  delay(5000);
-
-  // print the stepper data against time
-  bool dir = 0;
-  uint16_t step_inc = 50;
-  uint8_t el_meas = 40;
-  uint8_t az_meas = 90;
-  for(uint16_t j = 0; j < az_meas; j++){
-    for(uint16_t i = 0; i < el_meas; i++){
-      Serial.print("Az: ");
-      Serial.print(j*step_inc);
-      Serial.print("\tEl: ");
-      Serial.print(i*step_inc);
-      Serial.print("\t");
-      print_raw();
-      el_step_control(0,step_inc);
-    }
-    el_step_control(1, step_inc*el_meas);
-    az_step_control(1, step_inc);
+   /* Serial to display data */
+  Serial.begin(115200);
+  while(!Serial) {}
+  /* Start the SPI bus */
+  SPI.begin();
+  /* Initialize and configure IMU */
+  if (!imu.Begin()) {
+    Serial.println("Error initializing communication with IMU");
+    while(1) {}
   }
-  delay(100);
+  /* Set the sample rate divider */
+  if (!imu.ConfigSrd(0)) {
+    Serial.println("Error configured SRD");
+    while(1) {}
+  }
+
+
+
+
+  while(1){}
 }
 
 void loop(){};
@@ -85,12 +53,8 @@ void loop(){};
 void az_step_control(bool dir, uint16_t num_steps){
 
   // set direction of rotation
-  if(dir){
-    digitalWrite(az_dir, LOW);
-  }
-  else{
-    digitalWrite(az_dir, HIGH);
-  }
+  if(dir){ digitalWrite(az_dir_pin, LOW);}
+  else{ digitalWrite(az_dir_pin, HIGH);}
 
   // handle stepping a certain number of steps
   for (uint16_t step_count = 0; step_count < num_steps; step_count++){
@@ -105,12 +69,8 @@ void az_step_control(bool dir, uint16_t num_steps){
 void el_step_control(bool dir, uint16_t num_steps){
 
   // set direction of rotation
-  if(dir){
-    digitalWrite(el_dir, LOW);
-  }
-  else{
-    digitalWrite(el_dir, HIGH);
-  }
+  if(dir){ digitalWrite(el_dir_pin, LOW);}
+  else{ digitalWrite(el_dir_pin, HIGH); }
 
   // handle stepping a certain number of steps
   for (uint16_t step_count = 0; step_count < num_steps; step_count++){
@@ -121,71 +81,72 @@ void el_step_control(bool dir, uint16_t num_steps){
   }
 }
 
-// handle magnetic compass
-double get_az(){
+// when level, get the current azimuth measurement
+float get_az(){
 
     // initialize variables
-    uint32_t rawValueX = 0;
-    uint32_t rawValueY = 0;
-    uint32_t rawValueZ = 0;
+    uint8_t num_avg = 100;
+    float mag_x = 0;
+    float mag_y = 0;
+    float mag_z = 0;
 
-    // Read all three channels simultaneously
+    // get measurement from accelerometer, average over multiple readings
+    uint8_t i = 0;
+    while(i < num_avg){
+      if(imu.Read()){
+        if ((imu.mag_x_ut() != 0) & (imu.mag_y_ut() != 0) & (imu.mag_z_ut() != 0) ){
+          mag_x += imu.mag_x_ut()/num_avg;
+          mag_y += imu.mag_y_ut()/num_avg;
+          mag_z += imu.mag_z_ut()/num_avg;
+          i++;
+        }
+      }
+    }
+
+    // remove dc offset and scale to -1 to 1
+    mag_x = (mag_x - (-61.5))/27.46;
+    mag_y = (mag_y - (-198.96))/26.5;
+
+    // get the elevation from the atan function
+    float az_meas = atan(mag_x/mag_y);
+
+    return az_meas;
+}
+
+// when get the current elevation angle
+float get_el(){
+
+    // initialize variables
     uint8_t num_avg = 10;
-    uint32_t avg_x = 0;
-    uint32_t avg_y = 0;
-    uint32_t avg_z = 0;
-    // run num_avg measurements and get the average
-    for(uint8_t count = 0; count < num_avg; count++){
-      Mag.getMeasurementXYZ(&rawValueX, &rawValueY, &rawValueZ);
-      avg_x += rawValueX / num_avg;
-      avg_y += rawValueY / num_avg;
-      avg_z += rawValueZ / num_avg;
+    float accel_x = 0;
+    float accel_y = 0;
+    float accel_z = 0;
+
+    // get measurement from accelerometer, average over multiple readings
+    uint8_t i = 0;
+    while(i < num_avg){
+      if(imu.Read()){
+        accel_x += imu.accel_x_mps2()/num_avg;
+        accel_y += imu.accel_x_mps2()/num_avg;
+        accel_z += imu.accel_x_mps2()/num_avg;
+        i++;
+      }
     }
 
-    // convert raw x/y into heading
-    // define hard coded constants
-    // got declination from https://www.ngdc.noaa.gov/geomag/calculators/magcalc.shtml#igrfwmm
-    double declination = -9.25; // [degrees] at 40.4375N, 79.958W
-    double x_offset = 134212;
-    double x_scale = 3178;
-    double y_offset = 138990;
-    double y_scale = 3317;
+    // get the elevation from the atan function
+    float el_meas = atan(accel_x/accel_z);
 
-    // convert raw
-    double x = (avg_x - x_offset)/x_scale;
-    double y = (avg_y - y_offset)/y_scale;
-
-    // use arc tangent to get heading
-    double az = atan2(-y,x)*180/3.1415 + declination;
-
-    return az;
+    return el_meas;
 }
 
-// handle magnetic compass
-void print_raw(){
-    // initialize variables
-    uint32_t rawValueX = 0;
-    uint32_t rawValueY = 0;
-    uint32_t rawValueZ = 0;
+// find level
+void level(){
+  
+  // get the current elevation measurement
+  float el_curr = get_el();
 
-    // Read all three channels simultaneously
-    uint16_t num_avg = 10;
-    uint32_t avg_x = 0;
-    uint32_t avg_y = 0;
-    uint32_t avg_z = 0;
-    // run num_avg measurements and get the average
-    for(uint16_t count = 0; count < num_avg; count++){
-      Mag.getMeasurementXYZ(&rawValueX, &rawValueY, &rawValueZ);
-      avg_x += rawValueX / num_avg;
-      avg_y += rawValueY / num_avg;
-      avg_z += rawValueZ / num_avg;
-    }
-
-    Serial.print("X: ");
-    Serial.print(avg_x);
-    Serial.print("\tY: ");
-    Serial.print(avg_y);
-    Serial.print("\tZ: ");
-    Serial.print(avg_z);
-    Serial.print("\n");
+  // correct for the error in elevation
+  bool el_dir = el_curr > 0;
+  int16_t el_steps_abs = (int16_t)round(abs())
 }
+
