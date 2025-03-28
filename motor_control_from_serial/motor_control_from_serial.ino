@@ -165,8 +165,8 @@ float get_az(){
     }
 
     // remove dc offset and scale to -1 to 1
-    mag_x = (mag_x - (-61.5))/27.46;
-    mag_y = (mag_y - (-198.96))/26.5;
+    mag_x = (mag_x - (-62.05))/23.675;
+    mag_y = (mag_y - (-200.975))/23.945;
 
     // get the elevation from the atan function
     float az_meas = atan(mag_x/mag_y)*180/3.1415 + 40;
