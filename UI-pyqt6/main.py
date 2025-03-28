@@ -23,12 +23,12 @@ class MainWindow(QMainWindow):
         # self.tle_data = sgpb.read_tle_file(self.tle_file_path)
 
         file_path = "../sgp4/tle.txt"
-        tle_data = sgpb.read_tle_file(file_path)
+        self.tle_data = sgpb.read_tle_file(file_path)
         
-        self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in tle_data]
+        self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
         
         # observer = Observer(file_path=self.gps_file_path)
-        observer = Observer(40.444, -79.953, 300)
+        observer = Observer(lat=40.444, lon=-79.953, alt=300)
 
         et = pytz.timezone("US/Eastern")
         local_time = datetime.datetime.now(et)
