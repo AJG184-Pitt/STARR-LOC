@@ -171,7 +171,6 @@ class MainWindow(QMainWindow):
         grid.addWidget(self.label5, 8, 1, alignment=Qt.AlignmentFlag.AlignBottom)
         grid.addWidget(self.e5, 9, 1)
 
-
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_F10:
             self.startBtServer()
@@ -200,7 +199,6 @@ class MainWindow(QMainWindow):
         self.e3.setText(e3_data)
         self.e4.setText(e4_data)
         self.e5.setText(e5_data)
-
 
     def startBtServer(self):
         process = subprocess.Popen(['python3', '../bluetooth/btserver.py'],
