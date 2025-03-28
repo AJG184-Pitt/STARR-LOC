@@ -1,4 +1,3 @@
-
 // libraries
 #include <string.h>
 #include <Wire.h>

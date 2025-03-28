@@ -1,7 +1,7 @@
-from PyQt6.QtGui import QFont, QPixmap
+from PyQt6.QtGui import QFont, QPixmap, QKeyEvent
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QComboBox,
                             QLineEdit, QLabel, QGridLayout, QWidget, QVBoxLayout)
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import QSize, Qt, pyqtSignal
 
 import sys
 sys.path.append('../sgp4')
@@ -11,16 +11,20 @@ from observer import Observer
 from satellite import Satellite
 import pytz, datetime
 
+import subprocess
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
         # Information gathering
-        file_path = "../sgp4/tle.txt"
-        tle_data = sgpb.read_tle_file(file_path)
-        satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in tle_data]
+        self.tle_file_path = "../bluetooth/tle.data"
+        self.gps_file_path = "../bluetooth/gps.data"
+        self.tle_data = sgpb.read_tle_file(self.tle_file_path)
+        self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
         
-        observer = Observer(40.44, -79.95, 300)
+        observer = Observer(file_path=self.gps_file_path)
+        #observer = Observer(40.44, -79.95, 300)
 
         et = pytz.timezone("US/Eastern")
         local_time = datetime.datetime.now(et)
@@ -80,13 +84,13 @@ class MainWindow(QMainWindow):
             }
         """)
         # self.combo_box.addItems([satellite.name for satellite in satellites])
-        options = [sat.name for sat in satellites]
+        options = [sat.name for sat in self.satellites]
         self.combo_box.addItems(options)
         self.combo_box.setFixedWidth(390)
         self.combo_box.setFixedHeight(40)
 
         # Call method for selected satellite
-        self.combo_box.currentIndexChanged.connect(lambda: self.sat_data(satellites, self.combo_box.currentIndex(), observer, local_time))
+        self.combo_box.currentIndexChanged.connect(lambda: self.sat_data(self.satellites, self.combo_box.currentIndex(), observer, local_time))
 
         # Create entry widgets
         self.e1 = QLineEdit()
@@ -167,6 +171,11 @@ class MainWindow(QMainWindow):
         grid.addWidget(self.label5, 8, 1, alignment=Qt.AlignmentFlag.AlignBottom)
         grid.addWidget(self.e5, 9, 1)
 
+
+    def keyPressEvent(self, event: QKeyEvent):
+        if event.key() == Qt.Key.Key_F10:
+            self.startBtServer()
+
     def sat_data(self, satellites, selected, observer, local_time):
         # Get data from the satellite object
         e1_data = satellites[selected].getAngleFrom(observer, local_time)
@@ -192,6 +201,28 @@ class MainWindow(QMainWindow):
         self.e4.setText(e4_data)
         self.e5.setText(e5_data)
 
+
+    def startBtServer(self):
+        process = subprocess.Popen(['python3', '../bluetooth/btserver.py'],
+                                  stdin=None,
+                                  stdout=None,
+                                  stderr=subprocess.PIPE)
+
+        output, errors = process.communicate(input="")
+        if output != None:
+            print(f"{output.decode()}")
+    
+        if errors != None:
+            print(f"{errors.decode()}")
+
+        print("Bluetooth server returned to main loop")
+
+            
+        self.tle_data = sgpb.read_tle_file(self.tle_file_path)
+        self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
+        self.observer = Observer(file_path=self.gps_file_path)
+
+
 def main():
     # satellites = Satellite("Sat1", "32", "40")
 
@@ -200,5 +231,8 @@ def main():
     window.show()
     sys.exit(app.exec())
 
+
+
 if __name__ == '__main__':
+
     main()
