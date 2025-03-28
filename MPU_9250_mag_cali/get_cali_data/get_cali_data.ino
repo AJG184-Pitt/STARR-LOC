@@ -46,17 +46,54 @@ void setup() {
 
 
   level();
-  north();
 
+  delay(1000);
 
-  // initialize internally stored position information
+  // get data around circle
+  uint16_t step_inc = 50;
+  uint16_t steps_full = 5000;
+
+  for(uint16_t i = 0; i < steps_full; i += step_inc){
+    Serial.print(i);
+    Serial.print("\t");
+
+    // initialize variables
+    uint8_t num_avg = 200;
+    float mag_x = 0;
+    float mag_y = 0;
+    float mag_z = 0;
+
+    // get measurement from accelerometer, average over multiple readings
+    uint8_t j = 0;
+    while(j < num_avg){
+      if(imu.Read()){
+        if ((imu.mag_x_ut() != 0) & (imu.mag_y_ut() != 0) & (imu.mag_z_ut() != 0) ){
+          mag_x += imu.mag_x_ut()/num_avg;
+          mag_y += imu.mag_y_ut()/num_avg;
+          mag_z += imu.mag_z_ut()/num_avg;
+          j++;
+        }
+      }
+    }
+    az_step_control(0,step_inc);
+    Serial.print(mag_x);
+    Serial.print("\t");
+    Serial.print(mag_y);
+    Serial.print("\t");
+    Serial.print(mag_z);
+    Serial.print("\n");
+
+    delay(100);
+  }
+
+  /*// initialize internally stored position information
   float az_step_curr = 0;
   float el_step_curr = 0;
   float az_deg_curr = 0;
   float el_deg_curr = 0;
 
   while(1){
-
+    // wait for user input
     Serial.print("\nInput azimuth angle:\n");
     while(Serial.available() == 0){}
     String user_input = Serial.readString();
@@ -77,26 +114,11 @@ void setup() {
     azel_step_control(az_dir,az_step_adj,el_dir,el_step_adj);
 
     // update to current position
-    if (az_deg_adj >= 0){
-      az_step_curr += az_step_adj;
-      az_deg_curr += (float)az_step_adj/steps_per_revolution*360;
-    }
-    else{
-      az_step_curr -= az_step_adj;
-      az_deg_curr -= (float)az_step_adj/steps_per_revolution*360;
-    }
-
-    if (el_deg_adj >= 0){
-      el_step_curr += el_step_adj;
-      el_deg_curr += (float)el_step_adj/steps_per_revolution*360;
-    }
-    else{
-      el_step_curr -= el_step_adj;
-      el_deg_curr -= (float)el_step_adj/steps_per_revolution*360;
-    }
-
-
-  }
+    az_step_curr += az_step_adj;
+    el_step_curr += el_step_adj;
+    az_deg_curr += (float)az_step_adj/steps_per_revolution*360;
+    el_deg_curr += (float)el_step_adj/steps_per_revolution*360;
+  }*/
 
   while(1){}
 }
@@ -190,11 +212,11 @@ float get_az(){
     }
 
     // remove dc offset and scale to -1 to 1
-    mag_x = (mag_x - (-62.05))/23.675;
-    mag_y = (mag_y - (-200.975))/23.945;
+    mag_x = (mag_x - (-61.5))/27.46;
+    mag_y = (mag_y - (-198.96))/26.5;
 
     // get the elevation from the atan function
-    float az_meas = atan2(mag_x,mag_y)*180/3.1415 + 40;
+    float az_meas = atan(mag_x/mag_y)*180/3.1415 + 40;
 
     return az_meas;
 }

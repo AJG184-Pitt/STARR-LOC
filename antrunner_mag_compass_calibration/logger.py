@@ -10,7 +10,7 @@ try:
     print(f"Connected to {port} at {baudrate} baud.")
     
     # Open a file to write the output
-    with open("arduino_output.txt", "w") as file:
+    with open("MPU_9250_cal_data_3_28_2025.txt", "w") as file:
         while True:
             if ser.in_waiting:
                 data = ser.readline().decode('utf-8').strip()
