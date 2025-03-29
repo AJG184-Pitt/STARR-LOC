@@ -1,7 +1,7 @@
 from PyQt6.QtGui import QFont, QPixmap, QKeyEvent
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QComboBox,
                             QLineEdit, QLabel, QGridLayout, QWidget, QVBoxLayout)
-from PyQt6.QtCore import QSize, Qt, pyqtSignal
+from PyQt6.QtCore import QSize, Qt, pyqtSignal, QEvent
 
 import sys
 sys.path.append('../sgp4')
@@ -93,6 +93,10 @@ class MainWindow(QMainWindow):
         self.combo_box.setFixedWidth(390)
         self.combo_box.setFixedHeight(40)
 
+        self.combo_selected = False
+        self.combo_box.installEventFilter(self)
+        self.auto_flag = False
+
         # Call method for selected satellite
         self.combo_box.currentIndexChanged.connect(lambda: self.sat_data(self.satellites, self.combo_box.currentIndex(), observer, local_time))
 
@@ -105,17 +109,17 @@ class MainWindow(QMainWindow):
         self.e6 = QLineEdit()
 
         # Create interactable icons
-        label_image = QLabel(central_widget)
-        label_image.setGeometry(10, 400, 64,64)
-        pixmap = QPixmap('Assets/auto.png')
-        pixmap = pixmap.scaled(64,64)
-        label_image.setPixmap(pixmap)
+        self.auto_image = QLabel(central_widget)
+        self.auto_image.setGeometry(10, 400, 64,64)
+        pixmap1 = QPixmap('Assets/auto.png')
+        pixmap1 = pixmap1.scaled(64,64)
+        self.auto_image.setPixmap(pixmap1)
 
-        label_image_2 = QLabel(central_widget)
-        label_image_2.setGeometry(100, 400, 64, 64)
+        self.manual_image = QLabel(central_widget)
+        self.manual_image.setGeometry(100, 400, 64, 64)
         pixmap2 = QPixmap('Assets/manual.png')
         pixmap2 = pixmap2.scaled(64,64)
-        label_image_2.setPixmap(pixmap2)
+        self.manual_image.setPixmap(pixmap2)
 
         # Labels for satellite information
         self.label1 = QLabel("Current Angle:")
@@ -175,9 +179,163 @@ class MainWindow(QMainWindow):
         grid.addWidget(self.label5, 8, 1, alignment=Qt.AlignmentFlag.AlignBottom)
         grid.addWidget(self.e5, 9, 1)
 
-    # def keyPressEvent(self, event: QKeyEvent):
-    #     if event.key() == Qt.Key.Key_F10:
-    #         self.startBtServer()
+    def eventFilter(self, obj, event):
+        # Check if the event is a key press event
+        if event.type() == QEvent.Type.KeyPress:
+            # Check for F4 key specifically
+            if event.key() == Qt.Key.Key_F4:
+                # Only process if in auto mode
+                if self.auto_flag:
+                    print("sending data: 1")
+                    print("sending data: 2")
+                    print("sending data: 3")
+                    # Return True to indicate the event has been handled
+                    return True
+        
+        # Pass the event to the default event filter
+        return super().eventFilter(obj, event)
+    
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_F1:
+           self.auto_flag = True
+           self.combo_selected = False
+           self.setAutoIconSelected(event)
+        elif event.key() == Qt.Key.Key_F3:
+            self.auto_flag = False
+            self.combo_selected = False
+            self.setManualIconSelected()
+        elif event.key() == Qt.Key.Key_F2:
+            self.auto_flag = False
+            self.combo_selected = True
+            self.setDropdownSelected()
+
+        # elif self.combo_selected:  # Only allow navigation when combox is selected
+        #     if event.key() in (Qt.Key.Key_Space, Qt.Key.Key_Enter, Qt.Key.Key_Return, Qt.Key.Key_Up, Qt.Key.Key_Down):
+        #         #Allow movement within the dropdown when selected
+        #         self.combo_box.setCurrentIndex(self.combo_box.currentIndex()) #trigger update to the dropdown
+        #         return
+        #     else:
+        #         return # Ignore other keys when combox is selected
+        # else:
+        #     return #ignore keys when combox not selected
+
+        super().keyPressEvent(event)
+
+    def setDropdownSelected(self):
+        index = self.combo_box.currentIndex()
+        self.combo_box.setCurrentIndex(index)
+        self.combo_box.setStyleSheet("""
+            QComboBox {
+                border: 2px solid yellow;
+                border-radius: 5px;
+                padding: 1px 18px 1px 3px;
+                min-width: 6em;
+                color: white;
+                font-family: JetBrains Mono;
+                font-size: 14px;
+            }
+            
+            QComboBox::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 15px; /* Adjust as needed */
+                border-left-width: 1px;
+                border-left-color: darkgrey;
+                border-left-style: solid; 
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+                background-image: none; /* Remove default arrow */
+            }
+            
+            QComboBox::down-arrow {
+                border-image: url('Assets/drop-arrow');
+            }
+            
+            QComboBox QAbstractItemView {
+                background-color: grey; /* Dark grey for dropdown items */
+                color: white; /* Font color inside the dropdown */
+                border: 1px solid #27a7d8;
+                border-radius: 3px;
+            }
+        """)
+        self.manual_image.setStyleSheet("")
+        self.auto_image.setStyleSheet("")
+        
+    def setManualIconSelected(self):
+        self.manual_image.setStyleSheet("border: 2px solid yellow")
+        self.auto_image.setStyleSheet("")
+        self.combo_box.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #27a7d8;
+                border-radius: 5px;
+                padding: 1px 18px 1px 3px;
+                min-width: 6em;
+                color: white;
+                font-family: JetBrains Mono;
+                font-size: 14px;
+            }
+            
+            QComboBox::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 15px; /* Adjust as needed */
+                border-left-width: 1px;
+                border-left-color: darkgrey;
+                border-left-style: solid; 
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+                background-image: none; /* Remove default arrow */
+            }
+            
+            QComboBox::down-arrow {
+                border-image: url('Assets/drop-arrow');
+            }
+            
+            QComboBox QAbstractItemView {
+                background-color: grey; /* Dark grey for dropdown items */
+                color: white; /* Font color inside the dropdown */
+                border: 1px solid #27a7d8;
+                border-radius: 3px;
+            }
+        """)
+
+    def setAutoIconSelected(self, event):
+        self.auto_image.setStyleSheet("border: 2px solid yellow")
+        self.manual_image.setStyleSheet("")
+        self.combo_box.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #27a7d8;
+                border-radius: 5px;
+                padding: 1px 18px 1px 3px;
+                min-width: 6em;
+                color: white;
+                font-family: JetBrains Mono;
+                font-size: 14px;
+            }
+            
+            QComboBox::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 15px; /* Adjust as needed */
+                border-left-width: 1px;
+                border-left-color: darkgrey;
+                border-left-style: solid; 
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+                background-image: none; /* Remove default arrow */
+            }
+            
+            QComboBox::down-arrow {
+                border-image: url('Assets/drop-arrow');
+            }
+            
+            QComboBox QAbstractItemView {
+                background-color: grey; /* Dark grey for dropdown items */
+                color: white; /* Font color inside the dropdown */
+                border: 1px solid #27a7d8;
+                border-radius: 3px;
+            }
+        """)
 
     def sat_data(self, satellites, selected, observer, local_time):
         # Get data from the satellite object
@@ -185,6 +343,7 @@ class MainWindow(QMainWindow):
         
         e2_data = satellites[selected].nextOverhead(observer, local_time)
         e3_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e2_data)
+        
         # e4_data = satellites[selected].getAngleFrom(observer, local_time)
         e4_data = satellites[selected].name
 
@@ -203,6 +362,10 @@ class MainWindow(QMainWindow):
         self.e3.setText(e3_data)
         self.e4.setText(e4_data)
         self.e5.setText(e5_data)
+
+    # def keyPressEvent(self, event: QKeyEvent):
+    #     if event.key() == Qt.Key.Key_F10:
+    #         self.startBtServer()
 
     # def startBtServer(self):
     #     process = subprocess.Popen(['python3', '../bluetooth/btserver.py'],
@@ -224,7 +387,6 @@ class MainWindow(QMainWindow):
     #     self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
     #     self.observer = Observer(file_path=self.gps_file_path)
 
-
 def main():
     # satellites = Satellite("Sat1", "32", "40")
 
@@ -233,8 +395,5 @@ def main():
     window.show()
     sys.exit(app.exec())
 
-
-
 if __name__ == '__main__':
-
     main()
