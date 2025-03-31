@@ -1,6 +1,5 @@
 from sgp4.api import Satrec
 from sgp4.conveniences import jday
-from pymap3d import ecef2aer, eci2ecef
 import datetime
 import numpy as np
 

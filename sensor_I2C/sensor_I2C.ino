@@ -81,12 +81,12 @@ void loop()
 
     Serial.print("Heading (true north): ");
     Serial.println(heading, 1);
-    delay(100);
 
     Serial.print("X: ");
-    Serial.print(scaledX);
+    Serial.print(rawValueX);
     Serial.print(" Y: ");
-    Serial.print(scaledY);
+    Serial.print(rawValueY);
     Serial.print(" Z: ");
-    Serial.println(scaledZ);
+    Serial.println(rawValueZ);
+    delay(250);
 }

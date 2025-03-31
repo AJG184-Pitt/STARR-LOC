@@ -1,90 +1,144 @@
 #include <Stepper.h>
 
+/*==========================================================================
+// Description : Combined code for rotary encoder and slider control
+//==========================================================================
+*/
+
+// Rotary Encoder pins
 int pinA = 2;   // Connected to CLK on KY-040
 int pinB = 3;   // Connected to DT on KY-040
-int pinC = A0;  // Connected to analog pin
-
-const int STEPPER_STEPS = 32;
-const int GEAR_RATIO = 64;
-const int MIN_STEP_THRESHOLD = 5;
-const float STEP_MULTIPLIER = 3.2;
-
 int encoderPosCount = 0;
-int pinALast;
-int aVal;
-boolean bCW;
-int current_position_stepper1 = 0;
-int previous_slider = 0;
-unsigned long lastDebounceTime = 0;
-const unsigned long debounceDelay = 50;  // ms
+boolean direction;
 
-// Need to multiply steps by 64 due to the gear ratio
-Stepper stepper1(STEPPER_STEPS, 4, 6, 5, 7);
-Stepper stepper2(STEPPER_STEPS, 8, 10, 9, 11);
+// Slider pin 
+const int sliderPin = A0;  // Connected to analog pin
+
+// Direction and step pins for stepper2 (direct control)
+const int dirPin = 8;
+const int stepPin = 9;
+
+// 28BYJ-48 Stepper configuration
+const int stepsPerRevolution = 32; // Internal steps per revolution
+const int gearRatio = 64; // Internal gear ratio for 28BYJ-48
+const float stepsPerDegree = (stepsPerRevolution * gearRatio) / 360.0; // ~5.69 steps per degree
+
+// User settings - ADJUST THESE FOR DIFFERENT ROTATION AMOUNTS
+const float degreesPerStep = 1.0; // Set how many degrees to move per slider step
+const int sliderRange = 100; // Number of positions on the slider (0 to sliderRange)
+const int minStepThreshold = 1; // Minimum steps to move
+
+// Position tracking
+int currentPosition = 0;
+
+// Timing variables for step pulse generation - CRITICAL for proper movement
+const int stepPulseWidth = 1000;  // Pulse width in microseconds
+const int stepPulseDelay = 1500;  // Microseconds between pulses
+
+// Stepper motor for rotary encoder
+Stepper stepper(2048, 4, 6, 5, 7);
 
 void setup() {
-  pinMode(pinA, INPUT);
-  pinMode(pinB, INPUT);
-  pinMode(pinC, INPUT_PULLUP);
-  stepper1.setSpeed(200);
-  stepper2.setSpeed(200);
-  pinALast = digitalRead(pinA);
-  previous_slider = analogRead(pinC);
+  // Rotary encoder setup
+  pinMode(pinA, INPUT_PULLUP);
+  pinMode(pinB, INPUT_PULLUP);
+  
+  // Slider setup
+  pinMode(sliderPin, INPUT);
+  
+  // Stepper motor driver setup
+  pinMode(dirPin, OUTPUT);
+  pinMode(stepPin, OUTPUT);
+  digitalWrite(stepPin, LOW);
+  
+  // Set stepper speed
+  stepper.setSpeed(10);
+  
   Serial.begin(9600);
+  Serial.println("Initialized combined control system");
 }
 
 void loop() {
-  aVal = digitalRead(pinA);
-  int slider_value = analogRead(pinC);
+  // ===== ROTARY ENCODER HANDLING =====
+  static int pinALast = digitalRead(pinA);
   
-  // Calculate target position for stepper 2
-  int target_position_stepper2 = map(slider_value, 0, 1023, -STEPPER_STEPS, STEPPER_STEPS);
-  int steps_to_move_stepper2 = target_position_stepper2 - current_position_stepper1;
+  // Read current state of A and B pins
+  int aVal = digitalRead(pinA);
+  int bVal = digitalRead(pinB);
 
-  int steps_to_move_stepper1 = STEP_MULTIPLIER * GEAR_RATIO;
-
-  // int val = 0
-  if ((millis() - lastDebounceTime) > debounceDelay) {
-    if (aVal != pinALast) {  // Means the knob is rotating
-      lastDebounceTime = millis();
-      // if the knob is rotating, we need to determine direction
-      // We do that by reading pin B.
-      if (digitalRead(pinB) != aVal) {  // Means pin A Changed first - We're Rotating Clockwise.
-        //encoderPosCount++;
-        bCW = true;
-        steps_to_move_stepper1 = (int)(STEP_MULTIPLIER * GEAR_RATIO);
-      } else {  // Otherwise B changed first and we're moving CCW
-        bCW = false;
-        //encoderPosCount--;
-        steps_to_move_stepper1 = -(int)(STEP_MULTIPLIER * GEAR_RATIO);
-      }
-      
-      // if (!bCW) {
-      //   steps_to_move_stepper1 = -steps_to_move_stepper1;
-      // }
-
-      stepper1.step(steps_to_move_stepper1);
-      current_position_stepper1 += bCW ? steps_to_move_stepper1 : -steps_to_move_stepper1;
-
-      Serial.print("Rotated: ");
-      Serial.println(bCW ? "clockwise" : "counterclockwise");
-      Serial.print("Encoder Position: ");
-      Serial.println(encoderPosCount);
+  if (aVal != pinALast) { // Check for transitions on A
+    if (bVal == aVal) {
+      direction = true;   // Clockwise rotation detected
+      stepper.step(57);   // Take steps in the correct direction - simple approach
+    } else {
+      direction = false;  // Counter-clockwise rotation detected
+      stepper.step(-57);  // Take steps in the opposite direction - simple approach
     }
+    
+    pinALast = aVal;
+  
+    Serial.print("Rotated: ");
+    if (direction) {
+      Serial.println("clockwise");
+    } else {
+      Serial.println("counterclockwise");
+    }
+
+    encoderPosCount += direction ? 1 : -1; // Update position counter based on direction
+    Serial.print("Encoder Position: ");
+    Serial.println(encoderPosCount);
   }
 
-  // Handle slider movement for stepper2
-  if (abs(slider_value - previous_slider) > MIN_STEP_THRESHOLD) {
-    stepper2.step(steps_to_move_stepper2 * 64);
-    current_position_stepper1 += steps_to_move_stepper2;  // Update the tracked position
-
-    Serial.print("Slider Value: ");
-    Serial.println(slider_value);
-    Serial.print("Steps moved (Stepper 2): ");
-    Serial.println(steps_to_move_stepper2);
-
-    previous_slider = slider_value;
+  // ===== SLIDER HANDLING =====
+  // Read the current slider value
+  int sliderValue = analogRead(sliderPin);
+  
+  // Map slider value to a target position (0 to sliderRange)
+  int targetPosition = map(sliderValue, 0, 1023, 0, sliderRange);
+  
+  // Calculate steps to move
+  int stepsToMove = targetPosition - currentPosition;
+  
+  // Only move if the change exceeds the threshold
+  if (abs(stepsToMove) >= minStepThreshold) {
+    // Set direction based on movement direction
+    if (stepsToMove > 0) {
+      digitalWrite(dirPin, HIGH); // Clockwise
+    } else {
+      digitalWrite(dirPin, LOW); // Counter-clockwise
+    }
+    
+    // Calculate degrees to move
+    float degreesToMove = abs(stepsToMove) * degreesPerStep;
+    
+    // Convert degrees to motor steps
+    int totalSteps = round(degreesToMove * stepsPerDegree);
+    
+    // Take steps with careful timing
+    for (int i = 0; i < totalSteps; i++) {
+      // Generate one step pulse with longer HIGH time
+      digitalWrite(stepPin, HIGH);
+      delayMicroseconds(stepPulseWidth);
+      digitalWrite(stepPin, LOW);
+      
+      // Delay between pulses to ensure motor can keep up
+      delayMicroseconds(stepPulseDelay);
+    }
+    
+    // Update current position
+    currentPosition = targetPosition;
+    
+    // Print for debugging
+    Serial.print("Target: ");
+    Serial.print(targetPosition);
+    Serial.print(" | Current: ");
+    Serial.print(currentPosition);
+    Serial.print(" | Degrees: ");
+    Serial.print(degreesToMove);
+    Serial.print(" | Steps: ");
+    Serial.println(totalSteps);
   }
-
-  pinALast = aVal;
+  
+  // Small delay for overall timing - balance between responsiveness and stability
+  delay(10);  // Reduced delay for better responsiveness
 }
