@@ -33,9 +33,12 @@ class Satellite:
     
         r = self.getPosAtTime(date_time)
         # Convert to meters
+
         r = tuple(i*1000 for i in r)
 
-        self.observer_angle = eci2aer(r[0], r[1], r[2], observer.lat, observer.lon, observer.alt, date_time, deg=True)
+        observer_angle_bad_format = eci2aer(r[0], r[1], r[2], observer.lat, observer.lon, observer.alt, date_time, deg=True)
+        
+        self.observer_angle = (observer_angle_bad_format[0][0], observer_angle_bad_format[1][0], observer_angle_bad_format[2][0])
         return self.observer_angle
         
 

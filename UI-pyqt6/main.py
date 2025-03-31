@@ -84,7 +84,7 @@ class MainWindow(QMainWindow):
         self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
         
         # observer = Observer(file_path=self.gps_file_path)
-        observer = Observer(lat=40.444, lon=-79.953, alt=300)
+        self.observer = Observer(lat=40.444, lon=-79.953, alt=300)
 
         et = pytz.timezone("US/Eastern")
         local_time = datetime.datetime.now(et)
@@ -121,7 +121,7 @@ class MainWindow(QMainWindow):
         
         # Call method for selected satellite
         self.combo_box.currentIndexChanged.connect(
-            lambda: self.sat_data(self.satellites, self.combo_box.currentIndex(), observer, local_time)
+            lambda: self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, local_time)
         )
 
         # Create entry widgets
@@ -386,7 +386,7 @@ class MainWindow(QMainWindow):
         e5_data = str(observer.lat) + " , " + str(observer.lon) + " , " + str(observer.alt)
         
         # String formatting for displaying results
-        e1_data = "AZ: " + str(e1_data[0][0]) + " , " + "EL: " + str(e1_data[1][0])
+        e1_data = "AZ: " + str(e1_data[0]) + " , " + "EL: " + str(e1_data[1])
         e2_data = e2_data.strftime("%Y-%m-%d %H:%M:%S")
         e3_data = str(e3_data)
         e4_data = str(e4_data)
@@ -398,6 +398,22 @@ class MainWindow(QMainWindow):
         self.e3.setText(e3_data)
         self.e4.setText(e4_data)
         self.e5.setText(e5_data)
+
+    def startBluetoothServer(self):
+        process = subprocess.Popen(['python3', '../bluetooth/btserver.py'],
+                                   stdin=None,
+                                   stdout=None,
+                                   stderr=None)
+        
+        print("Bluetooth server returned to main loop")
+
+        self.tle_data = sgpb.read_tle_file("../bluetooth/tle.data")
+        self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
+        self.observer = Observer(file_path="../bluetooth/gps.data")
+        print("Bluetooth server updated TLE data and GPS data")
+
+        self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
+
 
 def main():
     app = QApplication(sys.argv)
