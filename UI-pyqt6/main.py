@@ -64,7 +64,7 @@ class CustomComboBox(QComboBox):
 
     def keyPressEvent(self, event):
         # Ignore keys when no modifiers are pressed, but propagate to parent
-        if event.key() in (Qt.Key.Key_M, Qt.Key.Key_N, Qt.Key.Key_Z) and not event.modifiers():
+        if event.key() in (Qt.Key.Key_M, Qt.Key.Key_N, Qt.Key.Key_B, Qt.Key.Key_J, Qt.Key.Key_K, Qt.Key.Key_L) and not event.modifiers():
             event.ignore()
             return
         return super().keyPressEvent(event)
@@ -112,9 +112,12 @@ class MainWindow(QMainWindow):
         self.manual_flag = False
         self.combo_selected = False
         
+        # Sort list based on distance
+        self.satellites = sorted(self.satellites, key=lambda sat: sat.getAngleFrom(observer, local_time)[2])
+        
         # Create custom combo box and populate it
         self.combo_box = CustomComboBox()
-        options = [sat.name for sat in self.satellites]
+        options = [f"{sat.name} ({sat.getAngleFrom(observer, local_time)[2][0]:.2f} kilometers)" for sat in self.satellites]
         self.combo_box.addItems(options)
         self.combo_box.setFixedWidth(390)
         self.combo_box.setFixedHeight(40)
@@ -213,7 +216,7 @@ class MainWindow(QMainWindow):
         # Check if the event is a key press event
         if event.type() == QEvent.Type.KeyPress:
             # Check for Z key specifically
-            if event.key() == Qt.Key.Key_Z:
+            if event.key() == Qt.Key.Key_B:
                 # Only process if in auto mode
                 if self.auto_flag:
                     print("sending data: 1")
@@ -239,21 +242,21 @@ class MainWindow(QMainWindow):
         return super().eventFilter(obj, event)
     
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key.Key_F1:
+        if event.key() == Qt.Key.Key_J:
            self.auto_flag = True
            self.combo_selected = False
            self.manual_flag = False
            self.setAutoIconSelected()
-        elif event.key() == Qt.Key.Key_F3:
-            self.auto_flag = False
-            self.combo_selected = False
-            self.manual_flag = True
-            self.setManualIconSelected()
-        elif event.key() == Qt.Key.Key_F2:
+        elif event.key() == Qt.Key.Key_K:
             self.auto_flag = False
             self.combo_selected = True
             self.manual_flag = False
             self.setDropdownSelected()
+        elif event.key() == Qt.Key.Key_L:
+            self.auto_flag = False
+            self.combo_selected = False
+            self.manual_flag = True
+            self.setManualIconSelected()
 
         super().keyPressEvent(event)
 
