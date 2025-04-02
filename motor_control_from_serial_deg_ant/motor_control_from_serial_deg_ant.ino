@@ -57,18 +57,24 @@ void setup() {
 
   while(1){
 
-    Serial.print("\nInput azimuth angle:\n");
+    // get angles from serial and put into string
+    //Serial.print("\nInput Angles in format <az> <el>:\n");
     while(Serial.available() == 0){}
-    String user_input = Serial.readString();
-    float az_deg_target = user_input.toFloat();
+    String serial_input = Serial.readString();
+
+    // parse string to separate az/el angles
+    int space_pos = serial_input.indexOf(' ');
+    String az_target_str = serial_input.substring(0, space_pos);
+    String el_target_str = serial_input.substring(space_pos + 1);
+    float az_deg_target = az_target_str.toFloat();
+    float el_deg_target = el_target_str.toFloat();
+
+    // get azimuth step adjustment from angle difference
     float az_deg_adj = az_deg_target - az_deg_curr;
     uint16_t az_step_adj = (uint16_t)round(abs(az_deg_adj/360*steps_per_revolution));
     bool az_dir = az_deg_adj < 0;
 
-    Serial.print("Input elevation angle:\n");
-    while(Serial.available() == 0){}
-    user_input = Serial.readString();
-    float el_deg_target = user_input.toFloat();
+    // get elevation step adjustment from angle difference
     float el_deg_adj = el_deg_target - el_deg_curr;
     uint16_t el_step_adj = (uint16_t)round(abs(el_deg_adj/360*steps_per_revolution));
     bool el_dir = el_deg_adj < 0;
@@ -98,6 +104,7 @@ void setup() {
 
   }
 
+  Serial.print("Error! Hanging in dead while loop.\n");
   while(1){}
 }
 
@@ -190,11 +197,12 @@ float get_az(){
     }
 
     // remove dc offset and scale to -1 to 1
-    mag_x = (mag_x - (-62.05))/23.675;
-    mag_y = (mag_y - (-200.975))/23.945;
+    mag_x = (mag_x - (-87.64))/24.59;
+    mag_y = (mag_y - (-233.805))/24.965;
 
     // get the elevation from the atan function
-    float az_meas = atan2(mag_x,mag_y)*180/3.1415 + 40;
+    float declination = 30;
+    float az_meas = atan2(mag_x,mag_y)*180/3.1415 + declination;
 
     return az_meas;
 }
