@@ -158,7 +158,7 @@ class MainWindow(QMainWindow):
         self.combo_selected = False
         
         # Sort list based on distance
-        self.satellites = sorted(self.satellites, key=lambda sat: sat.getAngleFrom(observer, local_time)[2])
+        self.satellites = sorted(self.satellites, key=lambda sat: sat.getAngleFrom(self.observer, local_time)[2])
         
         # Create custom combo box and populate it
         self.combo_box = CustomComboBox()
