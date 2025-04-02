@@ -58,6 +58,7 @@ void setup() {
   while(1){
 
     // get angles from serial and put into string
+    Serial.print("\nInput Angles in format <az> <el>:\n");
     while(Serial.available() == 0){}
     String serial_input = Serial.readString();
 
