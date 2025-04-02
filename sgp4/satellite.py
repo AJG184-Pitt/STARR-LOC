@@ -13,7 +13,7 @@ class Satellite:
         self.tle1 = tle_line1
         self.tle2 = tle_line2
         self.last_pos = 0
-        self.observer_angle = 0
+        self.observer_angle = (0, 0, 0.0)
         self.overhead = False
         self.next_overhead_instance = 0
         self.next_overhead_duration = 0

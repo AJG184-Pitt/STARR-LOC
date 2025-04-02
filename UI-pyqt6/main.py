@@ -1,10 +1,14 @@
-from PyQt6.QtGui import QFont, QPixmap, QKeyEvent
+from PyQt6.QtGui import QFont, QPixmap, QKeyEvent, QColor, QPainter
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QComboBox,
-                            QLineEdit, QLabel, QGridLayout, QWidget, QVBoxLayout)
+                            QLineEdit, QLabel, QGridLayout, QWidget, QVBoxLayout, QStyledItemDelegate)
 from PyQt6.QtCore import QSize, Qt, pyqtSignal, QEvent
 
 import sys
 import os
+import serial
+
+ser = serial.Serial("/dev/ttyACM0", 115200)
+
 
 # Add the relative path (this might work in some cases)
 sys.path.append('../sgp4')
@@ -19,6 +23,38 @@ from satellite import Satellite
 import pytz, datetime
 
 import subprocess
+    
+
+class ColorDelegate(QStyledItemDelegate):
+    def __init__(self, parent=None, sats=None, observer=None):
+        self.satellites = sats
+        self.observer = observer
+        super().__init__(parent)
+
+    def paint(self, painter: QPainter, option, index):
+
+        satellite = next((sat for sat in self.satellites if sat.name == index.data), None)
+        if satellite is not None:
+            el_angle = satellite.getAngleFrom(self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))[1]
+            color_index = 0
+            print(f"name = {self.satellites[satellite_index].name}")
+            print(f"angle = {el_angle}")
+            if el_angle > 30:
+                color_index = 2
+            elif el_angle > 0:
+                color_index = 1
+            else:
+                color_index = 0
+
+            colors = {
+                0: QColor(255, 200, 200),
+                1: QColor(80, 252, 234),
+                2: QColor(173, 153, 162),
+                }
+
+            painter.fillRect(option.rect, colors[color_index])
+            super().paint(painter, option, index)
+
 
 class CustomComboBox(QComboBox):
     """
@@ -72,19 +108,28 @@ class CustomComboBox(QComboBox):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        
+        self.showFullScreen()
+
+        self.fake_datetime = datetime.datetime(year=2025, month=4, day=2, hour=12, minute=10, second=0)
 
         # Information gathering
         # self.tle_file_path = "../bluetooth/tle.data"
         # self.gps_file_path = "../bluetooth/gps.data"
         # self.tle_data = sgpb.read_tle_file(self.tle_file_path)
 
-        file_path = "../sgp4/tle.txt"
-        self.tle_data = sgpb.read_tle_file(file_path)
+        #file_path = "../sgp4/tle.txt"
+        if os.path.exists("../bluetooth/tle.data"):
+
+            self.tle_data = sgpb.read_tle_file("../bluetooth/tle.data")
         
-        self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
+            self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
         
         # observer = Observer(file_path=self.gps_file_path)
         self.observer = Observer(lat=40.444, lon=-79.953, alt=300)
+
+        self.process = None
+        self.process_running = False
 
         et = pytz.timezone("US/Eastern")
         local_time = datetime.datetime.now(et)
@@ -114,8 +159,8 @@ class MainWindow(QMainWindow):
         
         # Create custom combo box and populate it
         self.combo_box = CustomComboBox()
-        options = [sat.name for sat in self.satellites]
-        self.combo_box.addItems(options)
+        #options = [sat.name for sat in self.satellites]
+        #self.combo_box.addItems(options)
         self.combo_box.setFixedWidth(390)
         self.combo_box.setFixedHeight(40)
         
@@ -209,6 +254,7 @@ class MainWindow(QMainWindow):
         # Install event filter on the window itself
         self.installEventFilter(self)
 
+
     def eventFilter(self, obj, event):
         # Check if the event is a key press event
         if event.type() == QEvent.Type.KeyPress:
@@ -234,6 +280,23 @@ class MainWindow(QMainWindow):
                     print(f"Example Step: {self.step_amount}")
                     self.step_amount += 1
                     return True
+            elif event.key() == Qt.Key.Key_F5:
+                self.startBluetoothServer()
+            elif event.key() == Qt.Key.Key_F6:
+                self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
+            elif event.key() == Qt.Key.Key_F7:
+                index = self.combo_box.currentIndex()
+                angle = self.satellites[index].getAngleFrom(self.observer, self.fake_datetime)
+                self.fake_datetime += datetime.timedelta(seconds=60)
+                print(f"{angle=}")
+                if angle[1] > 0:
+                    print("Sending motor command to esp32")
+                    string = f"{angle[0]} {angle[1]}"
+                    ser.write(string.encode())
+            elif event.key() == Qt.Key.Key_F8:
+                self.showFullScreen()
+            elif event.key() == Qt.Key.Key_F9:
+                self.showMaximized()
         
         # Pass the event to the default event filter
         return super().eventFilter(obj, event)
@@ -400,19 +463,28 @@ class MainWindow(QMainWindow):
         self.e5.setText(e5_data)
 
     def startBluetoothServer(self):
-        process = subprocess.Popen(['python3', '../bluetooth/btserver.py'],
+        
+        if not self.process_running:
+            self.process_running = True
+            self.process = subprocess.Popen(['python3', '../bluetooth/btserver.py'],
                                    stdin=None,
                                    stdout=None,
                                    stderr=None)
-        
-        print("Bluetooth server returned to main loop")
+            
+            self.process.wait()
+            print("Bluetooth server returned to main loop")
+            self.process_running = False
 
-        self.tle_data = sgpb.read_tle_file("../bluetooth/tle.data")
-        self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
-        self.observer = Observer(file_path="../bluetooth/gps.data")
-        print("Bluetooth server updated TLE data and GPS data")
+            self.tle_data = sgpb.read_tle_file("../bluetooth/tle.data")
+            self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
+            self.observer = Observer(file_path="../bluetooth/gps.data")
+            print("Bluetooth server updated TLE data and GPS data")
 
-        self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
+            self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
+
+            options = [sat.name for sat in self.satellites]
+            self.combo_box.clear()
+            self.combo_box.addItems(options)
 
 
 def main():
