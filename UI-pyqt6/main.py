@@ -84,7 +84,7 @@ class MainWindow(QMainWindow):
         self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
         
         # observer = Observer(file_path=self.gps_file_path)
-        observer = Observer(lat=40.444, lon=-79.953, alt=300)
+        observer = Observer(lat=40.4442, lon=-79.9557, alt=300)
 
         et = pytz.timezone("US/Eastern")
         local_time = datetime.datetime.now(et)
@@ -117,7 +117,7 @@ class MainWindow(QMainWindow):
         
         # Create custom combo box and populate it
         self.combo_box = CustomComboBox()
-        options = [f"{sat.name} ({sat.getAngleFrom(observer, local_time)[2][0]:.2f} kilometers)" for sat in self.satellites]
+        options = [f"{sat.name} ({sat.getAngleFrom(observer, local_time)[2][0]:.2f} kilometers | Overhead: {sat.overhead})" for sat in self.satellites]
         self.combo_box.addItems(options)
         self.combo_box.setFixedWidth(390)
         self.combo_box.setFixedHeight(40)
@@ -384,7 +384,6 @@ class MainWindow(QMainWindow):
         e3_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e2_data)
         
         # e4_data = satellites[selected].getAngleFrom(observer, local_time)
-        e4_data = satellites[selected].name
 
         e5_data = str(observer.lat) + " , " + str(observer.lon) + " , " + str(observer.alt)
         
@@ -392,7 +391,7 @@ class MainWindow(QMainWindow):
         e1_data = "AZ: " + str(e1_data[0][0]) + " , " + "EL: " + str(e1_data[1][0])
         e2_data = e2_data.strftime("%Y-%m-%d %H:%M:%S")
         e3_data = str(e3_data)
-        e4_data = str(e4_data)
+        e4_data = str("-1")
         # e5_data = str(e5_data)
         
         # Pass satellite data into text boxes
