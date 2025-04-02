@@ -117,7 +117,7 @@ class MainWindow(QMainWindow):
         
         # Create custom combo box and populate it
         self.combo_box = CustomComboBox()
-        options = [f"{sat.name} ({sat.getAngleFrom(observer, local_time)[2][0]:.2f} kilometers)" for sat in self.satellites]
+        options = [f"{sat.name} ({sat.getAngleFrom(observer, local_time)[2][0]:.2f} kilometers | Overhead: {sat.overhead})" for sat in self.satellites]
         self.combo_box.addItems(options)
         self.combo_box.setFixedWidth(390)
         self.combo_box.setFixedHeight(40)
