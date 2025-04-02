@@ -45,7 +45,7 @@ class Satellite:
         """
         angle =  self.getAngleFrom(observer, date_time)
         #print(f"Angle = {angle}, time = {date_time}")
-        self.overhead = (angle[1] >= 38)
+        self.overhead = (angle[1] >= 0)
         return self.overhead
 
     def nextOverhead(self, observer, date_time):
