@@ -43,7 +43,7 @@ try:
         # React to only the rising edge (from LOW to HIGH) to avoid double count
         if CLK_state != prev_CLK_state and CLK_state == GPIO.LOW:
             # If the DT state is HIGH, the encoder is rotating in counter-clockwise direction
-            # Decrease the counter
+            # Decrease the counter          
             if GPIO.input(DT_PIN) == GPIO.HIGH:
                 counter -= 1
                 direction = DIRECTION_CCW
@@ -51,7 +51,8 @@ try:
                 # The encoder is rotating in clockwise direction => increase the counter
                 counter += 1
                 direction = DIRECTION_CW
-
+            
+            # time.sleep(0.1)
             print("Rotary Encoder:: direction:", "CLOCKWISE" if direction == DIRECTION_CW else "ANTICLOCKWISE",
                   "- count:", counter)
 
