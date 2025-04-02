@@ -58,6 +58,7 @@ void setup() {
   while(1){
 
     // get angles from serial and put into string
+    //Serial.print("\nInput Angles in format <az> <el>:\n");
     while(Serial.available() == 0){}
     String serial_input = Serial.readString();
 
@@ -196,11 +197,12 @@ float get_az(){
     }
 
     // remove dc offset and scale to -1 to 1
-    mag_x = (mag_x - (-62.05))/23.675;
-    mag_y = (mag_y - (-200.975))/23.945;
+    mag_x = (mag_x - (-87.64))/24.59;
+    mag_y = (mag_y - (-233.805))/24.965;
 
     // get the elevation from the atan function
-    float az_meas = atan2(mag_x,mag_y)*180/3.1415 + 40;
+    float declination = 30;
+    float az_meas = atan2(mag_x,mag_y)*180/3.1415 + declination;
 
     return az_meas;
 }
