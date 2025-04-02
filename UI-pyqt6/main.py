@@ -6,6 +6,8 @@ from PyQt6.QtCore import QSize, Qt, pyqtSignal, QEvent
 import sys
 import os
 import serial
+import signal
+from time import sleep
 
 ser = serial.Serial("/dev/ttyACM0", 115200)
 
@@ -23,38 +25,8 @@ from satellite import Satellite
 import pytz, datetime
 
 import subprocess
+import multiprocessing
     
-
-class ColorDelegate(QStyledItemDelegate):
-    def __init__(self, parent=None, sats=None, observer=None):
-        self.satellites = sats
-        self.observer = observer
-        super().__init__(parent)
-
-    def paint(self, painter: QPainter, option, index):
-
-        satellite = next((sat for sat in self.satellites if sat.name == index.data), None)
-        if satellite is not None:
-            el_angle = satellite.getAngleFrom(self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))[1]
-            color_index = 0
-            print(f"name = {self.satellites[satellite_index].name}")
-            print(f"angle = {el_angle}")
-            if el_angle > 30:
-                color_index = 2
-            elif el_angle > 0:
-                color_index = 1
-            else:
-                color_index = 0
-
-            colors = {
-                0: QColor(255, 200, 200),
-                1: QColor(80, 252, 234),
-                2: QColor(173, 153, 162),
-                }
-
-            painter.fillRect(option.rect, colors[color_index])
-            super().paint(painter, option, index)
-
 
 class CustomComboBox(QComboBox):
     """
@@ -114,22 +86,21 @@ class MainWindow(QMainWindow):
         self.fake_datetime = datetime.datetime(year=2025, month=4, day=2, hour=12, minute=10, second=0)
 
         # Information gathering
-        # self.tle_file_path = "../bluetooth/tle.data"
-        # self.gps_file_path = "../bluetooth/gps.data"
-        # self.tle_data = sgpb.read_tle_file(self.tle_file_path)
+        self.tle_file_path = "../bluetooth/tle.data"
+        self.gps_file_path = "../bluetooth/gps.data"
 
-        #file_path = "../sgp4/tle.txt"
-        if os.path.exists("../bluetooth/tle.data"):
+        if os.path.exists(self.tle_file_path):
 
-            self.tle_data = sgpb.read_tle_file("../bluetooth/tle.data")
+            self.tle_data = sgpb.read_tle_file(self.tle_file_path)
         
             self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
         
-        # observer = Observer(file_path=self.gps_file_path)
-        self.observer = Observer(lat=40.4442, lon=-79.9557, alt=300)
+        if os.path.exists(self.gps_file_path):
+            self.observer = Observer(file_path=self.gps_file_path)
 
         self.process = None
         self.process_running = False
+        self.auto_track_process = multiprocessing.Process
 
         et = pytz.timezone("US/Eastern")
         local_time = datetime.datetime.now(et)
@@ -286,16 +257,18 @@ class MainWindow(QMainWindow):
             elif event.key() == Qt.Key.Key_F5:
                 self.startBluetoothServer()
             elif event.key() == Qt.Key.Key_F6:
-                self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
+                self.auto_track_process.terminate()
             elif event.key() == Qt.Key.Key_F7:
                 index = self.combo_box.currentIndex()
                 angle = self.satellites[index].getAngleFrom(self.observer, self.fake_datetime)
                 self.fake_datetime += datetime.timedelta(seconds=60)
-                print(f"{angle=}")
-                if angle[1] > 0:
-                    print("Sending motor command to esp32")
-                    string = f"{angle[0]} {angle[1]}"
-                    ser.write(string.encode())
+                # print(f"{angle=}")
+                self.auto_track_process = multiprocessing.Process(target=self.auto_tracking, args=self.satellites[index])
+
+                #if angle[1] > 0:
+                    #print("Sending motor command to esp32")
+                    #string = f"{angle[0]} {angle[1]}"
+                    #ser.write(string.encode())
             elif event.key() == Qt.Key.Key_F8:
                 self.showFullScreen()
             elif event.key() == Qt.Key.Key_F9:
@@ -488,11 +461,38 @@ class MainWindow(QMainWindow):
             self.combo_box.clear()
             self.combo_box.addItems(options)
 
+    def auto_tracking(self, satellite):
+        """
+        Auto tracking loop
+        """
+
+        while (1):
+            # Get the current time
+            current_time = datetime.datetime.now(pytz.timezone("US/Eastern"))
+
+            # Get the satellite position and angle
+            angle = satellite.getAngleFrom(self.observer, current_time)
+
+            # Check if the satellite is overhead
+            if satellite.isOverhead(self.observer, current_time):
+                print(f"Satellite {satellite.name} is overhead at {current_time}")
+                # Send motor command to ESP32
+                string = f"{angle[0]} {angle[1]}"
+                ser.write(string.encode())
+            else:
+                print(f"Satellite {satellite.name} is not overhead at {current_time}")
+
+            sleep(10)
+
 
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
+
+    signal.signal(signal.SIGALRM, window.sat_data(window.satellites, window.combo_box.currentIndex(), window.observer, window.fake_datetime))
+    signal.setitimer(signal.ITIMER_REAL, 1)
+
     sys.exit(app.exec())
 
 if __name__ == '__main__':
