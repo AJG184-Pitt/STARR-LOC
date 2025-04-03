@@ -24,30 +24,67 @@ import RPi.GPIO as GPIO
 import time
 
 class GpioSetup():
-    # Pin numbers on Raspberry Pi
-    CLK_PIN = 7   # GPIO7 connected to the rotary encoder's CLK pin
-    DT_PIN = 8    # GPIO8 connected to the rotary encoder's DT pin
-    SW_PIN = 25   # GPIO25 connected to the rotary encoder's SW pin
+    def __init__(self):
+        # Pin numbers on Raspberry Pi
+        self.CLK_PIN = 7   # GPIO7 connected to the rotary encoder's CLK pin
+        self.DT_PIN = 8    # GPIO8 connected to the rotary encoder's DT pin
+        self.SW_PIN = 25   # GPIO25 connected to the rotary encoder's SW pin
 
-    DIRECTION_CW = 0
-    DIRECTION_CCW = 1
+        self.DIRECTION_CW = 0
+        self.DIRECTION_CCW = 1
 
-    counter = 0
-    direction = DIRECTION_CW
-    CLK_state = 0
-    prev_CLK_state = 0
+        self.counter = 0
+        self.direction = self.DIRECTION_CW
+        self.CLK_state = 0
+        self.prev_CLK_state = 0
 
-    button_pressed = False
-    prev_button_state = GPIO.HIGH
+        self.button_pressed = False
+        self.prev_button_state = GPIO.HIGH
 
-    # Configure GPIO pins
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(CLK_PIN, GPIO.IN)
-    GPIO.setup(DT_PIN, GPIO.IN)
-    GPIO.setup(SW_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        # Configure GPIO pins
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(self.CLK_PIN, GPIO.IN)
+        GPIO.setup(self.DT_PIN, GPIO.IN)
+        GPIO.setup(self.SW_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-    # Read the initial state of the rotary encoder's CLK pin
-    prev_CLK_state = GPIO.input(CLK_PIN)
+        # Read the initial state of the rotary encoder's CLK pin
+        self.prev_CLK_state = GPIO.input(self.CLK_PIN)
+
+    def read_encoder(self):
+        # Read the current state of the rotary encoder's CLK pin
+        CLK_state = GPIO.input(self.CLK_PIN)
+
+        # If the state of CLK is changed, then pulse occurred
+        # React to only the rising edge (from LOW to HIGH) to avoid double count
+        if CLK_state != prev_CLK_state and CLK_state == GPIO.LOW:
+            # If the DT state is HIGH, the encoder is rotating in counter-clockwise direction
+            # Decrease the counter          
+            if GPIO.input(self.DT_PIN) == GPIO.HIGH:
+                counter -= 1
+                direction = self.DIRECTION_CCW
+            else:
+                # The encoder is rotating in clockwise direction => increase the counter
+                counter += 1
+                direction = self.DIRECTION_CW
+            
+            print("Rotary Encoder:: direction:", "CLOCKWISE" if direction == DIRECTION_CW else "ANTICLOCKWISE",
+                  "- count:", counter)
+
+        # Save last CLK state
+        prev_CLK_state = CLK_state
+
+    def read_button(self):
+        # State change detection for the button
+        button_state = GPIO.input(self.SW_PIN)
+        if button_state != prev_button_state:
+            time.sleep(0.1)  # Add a small delay to debounce
+            if button_state == GPIO.LOW:
+                print("The button is pressed")
+                self.button_pressed = True
+            else:
+                self.button_pressed = False
+
+        prev_button_state = button_state
 
 class CustomComboBox(QComboBox):
     """
