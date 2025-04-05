@@ -49,6 +49,43 @@ class GpioSetup():
     # Read the initial state of the rotary encoder's CLK pin
     prev_CLK_state = GPIO.input(CLK_PIN)
 
+    def rotate(CLK_PIN, DT_PIN, DIRECTION_CCW):
+        # Read the current state of the rotary encoder's CLK pin
+        CLK_state = GPIO.input(CLK_PIN)
+
+        # If the state of CLK is changed, then pulse occurred
+        # React to only the rising edge (from LOW to HIGH) to avoid double count
+        if CLK_state != prev_CLK_state and CLK_state == GPIO.LOW:
+            # If the DT state is HIGH, the encoder is rotating in counter-clockwise direction
+            # Decrease the counter          
+            if GPIO.input(DT_PIN) == GPIO.HIGH:
+                counter -= 1
+                direction = DIRECTION_CCW
+            else:
+                # The encoder is rotating in clockwise direction => increase the counter
+                counter += 1
+                direction = DIRECTION_CW
+            
+            # time.sleep(0.1)
+            print("Rotary Encoder:: direction:", "CLOCKWISE" if direction == DIRECTION_CW else "ANTICLOCKWISE",
+                  "- count:", counter)
+
+        # Save last CLK state
+        prev_CLK_state = CLK_state
+
+    def button():
+        # State change detection for the button
+        button_state = GPIO.input(SW_PIN)
+        if button_state != prev_button_state:
+            time.sleep(0.1)  # Add a small delay to debounce
+            if button_state == GPIO.LOW:
+                print("The button is pressed")
+                button_pressed = True
+            else:
+                button_pressed = False
+
+        prev_button_state = button_state
+
 class CustomComboBox(QComboBox):
     """
     A combobox that ignores certain keys for user operation on other labels
