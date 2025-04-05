@@ -54,25 +54,30 @@ class GpioSetup():
         # Read the current state of the rotary encoder's CLK pin
         CLK_state = GPIO.input(self.CLK_PIN)
 
+        pulse_difference = 0
+
         # If the state of CLK is changed, then pulse occurred
         # React to only the rising edge (from LOW to HIGH) to avoid double count
-        if CLK_state != prev_CLK_state and CLK_state == GPIO.LOW:
+        if CLK_state != self.prev_CLK_state and CLK_state == GPIO.LOW:
             # If the DT state is HIGH, the encoder is rotating in counter-clockwise direction
-            # Decrease the counter          
+            # Decrease the counter
             if GPIO.input(self.DT_PIN) == GPIO.HIGH:
-                counter -= 1
-                direction = self.DIRECTION_CCW
+                pulse_difference = -1
+                # self.counter -= 1
+                # self.direction = self.DIRECTION_CCW
             else:
                 # The encoder is rotating in clockwise direction => increase the counter
-                counter += 1
-                direction = self.DIRECTION_CW
-            
-            print("Rotary Encoder:: direction:", "CLOCKWISE" if direction == DIRECTION_CW else "ANTICLOCKWISE",
-                  "- count:", counter)
+                pulse_difference = 1
+                # self.counter += 1
+                # self.direction = self.DIRECTION_CW
+
+            # print("Rotary Encoder:: direction:", "CLOCKWISE" if self.direction == self.DIRECTION_CW else "ANTICLOCKWISE",
+            #       "- count:", self.counter)
 
         # Save last CLK state
-        prev_CLK_state = CLK_state
-
+        self.prev_CLK_state = CLK_state
+        return pulse_difference
+        
     def read_button(self):
         # State change detection for the button
         button_state = GPIO.input(self.SW_PIN)
@@ -86,42 +91,7 @@ class GpioSetup():
 
         prev_button_state = button_state
 
-    def rotate(CLK_PIN, DT_PIN, DIRECTION_CCW):
-        # Read the current state of the rotary encoder's CLK pin
-        CLK_state = GPIO.input(CLK_PIN)
-
-        # If the state of CLK is changed, then pulse occurred
-        # React to only the rising edge (from LOW to HIGH) to avoid double count
-        if CLK_state != prev_CLK_state and CLK_state == GPIO.LOW:
-            # If the DT state is HIGH, the encoder is rotating in counter-clockwise direction
-            # Decrease the counter          
-            if GPIO.input(DT_PIN) == GPIO.HIGH:
-                counter -= 1
-                direction = DIRECTION_CCW
-            else:
-                # The encoder is rotating in clockwise direction => increase the counter
-                counter += 1
-                direction = DIRECTION_CW
-            
-            # time.sleep(0.1)
-            print("Rotary Encoder:: direction:", "CLOCKWISE" if direction == DIRECTION_CW else "ANTICLOCKWISE",
-                  "- count:", counter)
-
-        # Save last CLK state
-        prev_CLK_state = CLK_state
-
-    def button():
-        # State change detection for the button
-        button_state = GPIO.input(SW_PIN)
-        if button_state != prev_button_state:
-            time.sleep(0.1)  # Add a small delay to debounce
-            if button_state == GPIO.LOW:
-                print("The button is pressed")
-                button_pressed = True
-            else:
-                button_pressed = False
-
-        prev_button_state = button_state
+        return self.button_pressed
 
 class CustomComboBox(QComboBox):
     """
@@ -176,8 +146,6 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.gpio = GpioSetup()
-
         # Information gathering
         # self.tle_file_path = "../bluetooth/tle.data"
         # self.gps_file_path = "../bluetooth/gps.data"
@@ -211,12 +179,7 @@ class MainWindow(QMainWindow):
         """)
         self.setCentralWidget(central_widget)
         grid = QGridLayout(central_widget)
-        
-        # Initialize flags
-        self.auto_flag = False
-        self.manual_flag = False
-        self.combo_selected = False
-        
+
         # Sort list based on distance
         self.satellites = sorted(self.satellites, key=lambda sat: sat.getAngleFrom(observer, local_time)[2])
         
@@ -311,17 +274,62 @@ class MainWindow(QMainWindow):
         grid.addWidget(self.label5, 8, 1, alignment=Qt.AlignmentFlag.AlignBottom)
         grid.addWidget(self.e5, 9, 1)
 
-        # Example step counter for manual operation
-        self.step_amount = 0
-        
         # Install event filter on the window itself
         self.installEventFilter(self)
 
+        # Initialize flags for selection
+        self.auto_flag = False
+        self.manual_flag = False
+        self.combo_selected = False
+        
+        # Initialize gpio class object
+        self.gpio = GpioSetup()
+        self.selected_labels = [0, 1, 2]
+        self.current_index = 0
+        
+        self.encoder_timer = QTimer(self)
+        self.encoder_timer.timeout.connect(self.update_current_index)
+        self.encoder_timer.start(50)  # Check every 50ms
+        
+        # Temp code for testing
+        self.step_amount = 0
+
+    def update_current_index(self):
+        previous_index = self.current_index
+        # Update current index based on encoder value
+        self.encode = self.gpio.read_encoder()
+        if self.encode == 1:
+            self.current_index = (self.current_index + 1) % len(self.selected_labels)
+        elif self.encode == -1:
+            self.current_index = (self.current_index - 1) % len(self.selected_labels)
+        
+        # Update UI if index changed
+        if previous_index != self.current_index:
+            self.update_selection()
+
+    def update_selection(self):
+        # Update UI based on current_index
+        if self.current_index == 0:
+            self.auto_flag = True
+            self.combo_selected = False
+            self.manual_flag = False
+            self.setAutoIconSelected()
+        elif self.current_index == 1:
+            self.auto_flag = False
+            self.combo_selected = True
+            self.manual_flag = False
+            self.setDropdownSelected()
+        elif self.current_index == 2:
+            self.auto_flag = False
+            self.combo_selected = False
+            self.manual_flag = True
+            self.setManualIconSelected()
+        
     def eventFilter(self, obj, event):
         # Check if the event is a key press event
         if event.type() == QEvent.Type.KeyPress:
             # Check for Z key specifically
-            if event.key() == Qt.Key.Key_B:
+            if event.key() == Qt.Key.Key_B or self.gpio.read_button():
                 # Only process if in auto mode
                 if self.auto_flag:
                     print("sending data: 1")
@@ -331,13 +339,13 @@ class MainWindow(QMainWindow):
                     return True
 
             # Check for N key and manual flag to print
-            if event.key() == Qt.Key.Key_N:
+            if event.key() == Qt.Key.Key_N or self.gpio.read_button():
                 if self.manual_flag:
                     print(f"Example Step: {self.step_amount}")
                     self.step_amount -= 1
                     return True
             # Check for M key and manual flag to print
-            elif event.key() == Qt.Key.Key_M:
+            elif event.key() == Qt.Key.Key_M or self.gpio.read_button():
                 if self.manual_flag:
                     print(f"Example Step: {self.step_amount}")
                     self.step_amount += 1
