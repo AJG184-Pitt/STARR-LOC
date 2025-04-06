@@ -1,7 +1,7 @@
 from PyQt6.QtGui import QFont, QPixmap, QKeyEvent
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QComboBox,
                             QLineEdit, QLabel, QGridLayout, QWidget, QVBoxLayout)
-from PyQt6.QtCore import QSize, Qt, pyqtSignal, QEvent
+from PyQt6.QtCore import QSize, Qt, pyqtSignal, QEvent, QTimer
 
 import sys
 import os
@@ -287,8 +287,15 @@ class MainWindow(QMainWindow):
         self.selected_labels = [0, 1, 2]
         self.current_index = 0
         
+        # Encoder checks
         self.encoder_timer = QTimer(self)
         self.encoder_timer.timeout.connect(self.update_current_index)
+        self.encoder_timer.start(50)  # Check every 50ms
+
+        # Encoder button checks
+        self.button_action_pending = False  # Add this as a class variable
+        self.encoder_timer = QTimer(self)
+        self.encoder_timer.timeout.connect(self.update_inputs)  # Connect to new method
         self.encoder_timer.start(50)  # Check every 50ms
         
         # Temp code for testing
@@ -324,12 +331,32 @@ class MainWindow(QMainWindow):
             self.combo_selected = False
             self.manual_flag = True
             self.setManualIconSelected()
+
+    def update_button(self):
+        # First update encoder position
+        self.update_current_index()
+        
+        # Then check button state
+        if self.gpio.read_button():
+            # Button is pressed, handle based on current mode
+            if self.auto_flag:
+                print("sending data: 1")
+                print("sending data: 2")
+                print("sending data: 3")
+            elif self.manual_flag:
+                if self.button_action_pending == False:  # Prevent repeated actions
+                    print(f"Example Step: {self.step_amount}")
+                    self.step_amount += 1
+                    self.button_action_pending = True
+        else:
+            # Button is released
+            self.button_action_pending = False
         
     def eventFilter(self, obj, event):
         # Check if the event is a key press event
         if event.type() == QEvent.Type.KeyPress:
             # Check for Z key specifically
-            if event.key() == Qt.Key.Key_B or self.gpio.read_button():
+            if event.key() == Qt.Key.Key_B:
                 # Only process if in auto mode
                 if self.auto_flag:
                     print("sending data: 1")
@@ -339,13 +366,13 @@ class MainWindow(QMainWindow):
                     return True
 
             # Check for N key and manual flag to print
-            if event.key() == Qt.Key.Key_N or self.gpio.read_button():
+            if event.key() == Qt.Key.Key_N:
                 if self.manual_flag:
                     print(f"Example Step: {self.step_amount}")
                     self.step_amount -= 1
                     return True
             # Check for M key and manual flag to print
-            elif event.key() == Qt.Key.Key_M or self.gpio.read_button():
+            elif event.key() == Qt.Key.Key_M:
                 if self.manual_flag:
                     print(f"Example Step: {self.step_amount}")
                     self.step_amount += 1
