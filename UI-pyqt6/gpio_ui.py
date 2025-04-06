@@ -81,7 +81,7 @@ class GpioSetup():
     def read_button(self):
         # State change detection for the button
         button_state = GPIO.input(self.SW_PIN)
-        if button_state != prev_button_state:
+        if button_state != self.prev_button_state:
             time.sleep(0.1)  # Add a small delay to debounce
             if button_state == GPIO.LOW:
                 print("The button is pressed")
@@ -89,7 +89,7 @@ class GpioSetup():
             else:
                 self.button_pressed = False
 
-        prev_button_state = button_state
+        self.prev_button_state = button_state
 
         return self.button_pressed
 
