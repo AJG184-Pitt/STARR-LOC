@@ -1,7 +1,7 @@
 from PyQt6.QtGui import QFont, QPixmap, QKeyEvent, QColor, QPainter
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QComboBox,
                             QLineEdit, QLabel, QGridLayout, QWidget, QVBoxLayout, QStyledItemDelegate)
-from PyQt6.QtCore import QSize, Qt, pyqtSignal, QEvent
+from PyQt6.QtCore import QSize, Qt, pyqtSignal, QEvent, QTimer, pyqtSignal
 
 import sys
 import os
@@ -10,8 +10,9 @@ import signal
 from time import sleep
 import functools
 
-ser = serial.Serial("/dev/ttyUSB0", 115200)
-
+ser = serial.Serial("/dev/ttyUSB0", 115200, rtscts=False, dsrdtr=False)
+ser.rts = False
+ser.dtr = False
 
 # Add the relative path (this might work in some cases)
 sys.path.append('../sgp4')
@@ -79,6 +80,9 @@ class CustomComboBox(QComboBox):
         return super().keyPressEvent(event)
 
 class MainWindow(QMainWindow):
+
+    auto_track = pyqtSignal()
+
     def __init__(self):
         super().__init__()
         
@@ -229,13 +233,20 @@ class MainWindow(QMainWindow):
         # Install event filter on the window itself
         self.installEventFilter(self)
 
-        signal.signal(signal.SIGALRM, self.reread_data)
-        signal.setitimer(signal.ITIMER_REAL, 5, 5)
+        #self.serial = QtSerialPort.QtSerialPort('/dev/ttyUSB0', baudRate=115200)
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.quick_data)
+        self.timer.start(5000)
+
+
+        #signal.signal(signal.SIGALRM, self.quick_data)
+        #signal.setitimer(signal.ITIMER_REAL, 5, 5)
 
         self.reread_data()
 
 
-        options = [sat.name for sat in self.satellites]
+        options = [f"{sat.name} | {sat.overhead} " for sat in self.satellites]
         self.combo_box.clear()
         self.combo_box.addItems(options)
 
@@ -268,13 +279,14 @@ class MainWindow(QMainWindow):
             elif event.key() == Qt.Key.Key_F5:
                 self.startBluetoothServer()
             elif event.key() == Qt.Key.Key_F6:
-                self.auto_track_process.terminate()
+                #self.auto_track_process.terminate()
+                #self.auto_track.stop()
+                pass
             elif event.key() == Qt.Key.Key_F7:
-                index = self.combo_box.currentIndex()
-                angle = self.satellites[index].getAngleFrom(self.observer, self.fake_datetime)
-                self.fake_datetime += datetime.timedelta(seconds=60)
-                # print(f"{angle=}")
-                self.auto_track_process = multiprocessing.Process(target=self.auto_tracking, args=index)
+                #self.fake_datetime += datetime.timedelta(seconds=60)
+                print("Starting Process")
+                #self.auto_track_process = multiprocessing.Process(target=self.auto_tracking)
+                self.auto_track.emit()
 
                 #if angle[1] > 0:
                     #print("Sending motor command to esp32")
@@ -464,6 +476,9 @@ class MainWindow(QMainWindow):
 
             self.reread_data()
 
+    def quick_data(self):
+        self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
+
 
     def reread_data(self, signum=None, frame=None):
 
@@ -477,11 +492,11 @@ class MainWindow(QMainWindow):
 
 
 
-    def auto_tracking(self, index):
+    def auto_tracking(self):
         """
         Auto tracking loop
         """
-        satellite = self.satellies[index]
+        satellite = self.satellites[self.combo_box.currentIndex()]
 
         while (1):
             # Get the current time
@@ -489,22 +504,26 @@ class MainWindow(QMainWindow):
 
             # Get the satellite position and angle
             angle = satellite.getAngleFrom(self.observer, current_time)
-
             # Check if the satellite is overhead
-            if satellite.isOverhead(self.observer, current_time):
+            #if satellite.isOverhead(self.observer, current_time):
+            if angle[1] > 0: 
                 print(f"Satellite {satellite.name} is overhead at {current_time}")
                 # Send motor command to ESP32
-                string = f"{angle[0]} {angle[1]}"
+                string = f"{angle[0]} {angle[1]} 0"
                 ser.write(string.encode())
+                #self.serial.write(string.encode())
             else:
                 print(f"Satellite {satellite.name} is not overhead at {current_time}")
+                break
 
-            sleep(10)
+            sleep(1)
 
 
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
+    
+    window.auto_track.connect(window.auto_tracking)
     window.show()
 
     sys.exit(app.exec())
