@@ -246,7 +246,7 @@ class MainWindow(QMainWindow):
         self.reread_data()
 
 
-        options = [f"{sat.name} | {sat.overhead} " for sat in self.satellites]
+        options = [f"{sat.name:20} | {sat.overhead:10} " for sat in self.satellites]
         self.combo_box.clear()
         self.combo_box.addItems(options)
 
@@ -438,6 +438,7 @@ class MainWindow(QMainWindow):
     def sat_data(self, satellites, selected, observer, local_time):
         print("sat data")
         # Get data from the satellite object
+        
         e1_data = satellites[selected].getAngleFrom(observer, local_time)
         
         e2_data = satellites[selected].nextOverhead(observer, local_time)
@@ -445,12 +446,15 @@ class MainWindow(QMainWindow):
         
         # e4_data = satellites[selected].getAngleFrom(observer, local_time)
 
-        e5_data = str(observer.lat) + " , " + str(observer.lon) + " , " + str(observer.alt)
+        #e5_data = str(observer.lat) + " , " + str(observer.lon) + " , " + str(observer.alt)
+        e5_data = f"Lat: {observer.lat:.2f}, Lon: {observer.lon:.2f}, Alt: {observer.alt:.2f}"
         
         # String formatting for displaying results
-        e1_data = "AZ: " + str(e1_data[0]) + " , " + "EL: " + str(e1_data[1])
+        #e1_data = "AZ: " + str(e1_data[0]) + " , " + "EL: " + str(e1_data[1])
+        e1_data = f"Azimuth: {e1_data[0]:.2f}, Elevation: {e1_data[1]:.2f}"
         e2_data = e2_data.strftime("%Y-%m-%d %H:%M:%S")
-        e3_data = str(e3_data)
+        #e3_data = str(e3_data)
+        e3_data = f"Minutes : {e3_data[0]}, Seconds: {e3_data[1]}"
         e4_data = str("-1")
         # e5_data = str(e5_data)
         
@@ -477,7 +481,18 @@ class MainWindow(QMainWindow):
             self.reread_data()
 
     def quick_data(self):
-        self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
+        print("quick data")
+        time = datetime.datetime.now(pytz.timezone("US/Eastern"))
+        self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, time)
+
+        for satellite in self.satellites:
+            satellite.isOverhead(self.observer, time)
+
+        #sat_labels = [f"{sat.name:20} | {overhead:10} " for sat in self.satellites]
+        sat_labels = [f"{sat.name:20} | " if not sat.overhead else f"{sat.name:20} |     Overhead " for sat in self.satellites]
+        for i, text in enumerate(sat_labels):
+            self.combo_box.setItemText(i, text)
+
 
 
     def reread_data(self, signum=None, frame=None):
