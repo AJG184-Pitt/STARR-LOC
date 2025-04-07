@@ -229,16 +229,6 @@ class MainWindow(QMainWindow):
         # Install event filter on the window itself
         self.installEventFilter(self)
 
-        signal.signal(signal.SIGALRM, self.reread_data)
-        signal.setitimer(signal.ITIMER_REAL, 5, 5)
-
-        self.reread_data()
-
-
-        options = [sat.name for sat in self.satellites]
-        self.combo_box.clear()
-        self.combo_box.addItems(options)
-
 
     def eventFilter(self, obj, event):
         # Check if the event is a key press event
@@ -274,7 +264,7 @@ class MainWindow(QMainWindow):
                 angle = self.satellites[index].getAngleFrom(self.observer, self.fake_datetime)
                 self.fake_datetime += datetime.timedelta(seconds=60)
                 # print(f"{angle=}")
-                self.auto_track_process = multiprocessing.Process(target=self.auto_tracking, args=index)
+                self.auto_track_process = multiprocessing.Process(target=self.auto_tracking, args=self.satellites[index])
 
                 #if angle[1] > 0:
                     #print("Sending motor command to esp32")
@@ -424,7 +414,6 @@ class MainWindow(QMainWindow):
         """)
 
     def sat_data(self, satellites, selected, observer, local_time):
-        print("sat data")
         # Get data from the satellite object
         e1_data = satellites[selected].getAngleFrom(observer, local_time)
         
@@ -465,23 +454,24 @@ class MainWindow(QMainWindow):
             self.reread_data()
 
 
-    def reread_data(self, signum=None, frame=None):
-
-            print("rereading data")
+    def reread_data(self):
             self.tle_data = sgpb.read_tle_file("../bluetooth/tle.data")
             self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
             self.observer = Observer(file_path="../bluetooth/gps.data")
-            
+            print("Bluetooth server updated TLE data and GPS data")
+
             self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
 
+            options = [sat.name for sat in self.satellites]
+            self.combo_box.clear()
+            self.combo_box.addItems(options)
 
 
 
-    def auto_tracking(self, index):
+    def auto_tracking(self, satellite):
         """
         Auto tracking loop
         """
-        satellite = self.satellies[index]
 
         while (1):
             # Get the current time
@@ -508,7 +498,9 @@ def main():
     window.show()
 
     sys.exit(app.exec())
-
+    
+    signal.signal(signal.SIGALRM, reread_data)
+    signal.setitimer(signal.ITIMER_REAL, 1)
 
 if __name__ == '__main__':
     main()
