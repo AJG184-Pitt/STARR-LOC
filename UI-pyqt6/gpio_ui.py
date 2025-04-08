@@ -122,7 +122,6 @@ class GpioSetup():
         if button_state != self.prev_button_state:
             time.sleep(0.1)  # Add a small delay to debounce
             if button_state == GPIO.LOW:
-                print("Button 1 is pressed")
                 self.button_pressed = True
             else:
                 self.button_pressed = False
@@ -136,7 +135,6 @@ class GpioSetup():
         if button_state_2 != self.prev_button_state_2:
             time.sleep(0.1)  # Add a small delay to debounce
             if button_state_2 == GPIO.LOW:
-                print("Button 2 is pressed")
                 self.button_pressed_2 = True
             else:
                 self.button_pressed_2 = False
@@ -352,6 +350,9 @@ class MainWindow(QMainWindow):
         # Temp code for testing
         self.step_amount = 0
 
+        # Automatic mode flag
+        self.auto_toggle_active = False
+
     def update_current_index(self):
         previous_index = self.current_index
         # Update current index based on encoder value
@@ -391,9 +392,9 @@ class MainWindow(QMainWindow):
         if self.gpio.read_button():
             # Button is pressed, handle based on current mode
             if self.auto_flag:
-                print("sending data: 1")
-                print("sending data: 2")
-                print("sending data: 3")
+                if not self.button_action_pending:
+                    self.auto_toggle_active = not self.auto_toggle_active
+                    print(f"Auto toggle Mode: {'Active' if self.auto_toggle_active else 'Inactive'}")
             elif self.manual_flag:
                 if self.button_action_pending == False:  # Prevent repeated actions
                     print(f"Example Step: {self.step_amount}")
@@ -410,9 +411,7 @@ class MainWindow(QMainWindow):
             if event.key() == Qt.Key.Key_B:
                 # Only process if in auto mode
                 if self.auto_flag:
-                    print("sending data: 1")
-                    print("sending data: 2")
-                    print("sending data: 3")
+                    print("Automatic Mode: On")
                     # Return True to indicate the event has been handled
                     return True
 
