@@ -346,7 +346,7 @@ class MainWindow(QMainWindow):
         # Encoder button checks
         self.button_action_pending = False  # Add this as a class variable
         self.encoder_timer = QTimer(self)
-        self.encoder_timer.timeout.connect(self.update_inputs)  # Connect to new method
+        self.encoder_timer.timeout.connect(self.update_button)  # Connect to new method
         self.encoder_timer.start(50)  # Check every 50ms
         
         # Temp code for testing
