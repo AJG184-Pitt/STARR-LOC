@@ -5,6 +5,7 @@ from PyQt6.QtCore import QSize, Qt, pyqtSignal, QEvent, QTimer
 
 import sys
 import os
+from serial import Serial
 
 # Add the relative path (this might work in some cases)
 sys.path.append('../sgp4')
@@ -421,10 +422,27 @@ class MainWindow(QMainWindow):
             elif self.manual_flag:
                 if self.button_action_pending == False:  # Prevent repeated actions
                     print("Manual mode pending integration")
+                    self.manual_encoder_control()
                     self.button_action_pending = True
         else:
             # Button is released
             self.button_action_pending = False
+
+    def manual_encoder_control(self):
+        ser = Serial('/dev/ttyACM0', 115200, timeout=1)
+        time.sleep(0.5)
+        
+        while True:
+            data1 = self.gpio.read_encoder()
+            ser.write(data1.encode())
+            time.sleep(0.5)
+
+            data2 = self.gpio.read_encoder_2()
+            ser.write(data2.encode())
+            time.sleep(0.5)
+
+            if self.gpio.read_button():
+                break
         
     def eventFilter(self, obj, event):
         # Check if the event is a key press event
