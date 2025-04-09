@@ -266,6 +266,12 @@ class MainWindow(QMainWindow):
         pixmap2 = pixmap2.scaled(64, 64)
         self.manual_image.setPixmap(pixmap2)
 
+        self.bluetooth_image = QLabel(central_widget)
+        self.bluetooth_image.setGeometry(190, 400, 48, 64)
+        pixmap3 = QPixmap('Assets/bluetooth.png')
+        pixmap3 = pixmap3.scaled(48, 64)
+        self.bluetooth_image.setPixmap(pixmap3)
+
         # Labels for satellite information
         self.label1 = QLabel("Current Angle:")
         self.label2 = QLabel("Next Satellite Overhead Period:")
@@ -331,10 +337,11 @@ class MainWindow(QMainWindow):
         self.auto_flag = False
         self.manual_flag = False
         self.combo_selected = False
+        self.bluetooth_selected = False
         
         # Initialize gpio class object
         self.gpio = GpioSetup()
-        self.selected_labels = [0, 1, 2]
+        self.selected_labels = [0, 1, 2, 3]
         self.current_index = 0
         
         # Encoder checks
@@ -396,18 +403,27 @@ class MainWindow(QMainWindow):
             self.auto_flag = True
             self.combo_selected = False
             self.manual_flag = False
+            self.bluetooth_selected = False
             self.setAutoIconSelected()
         elif self.current_index == 1:
             self.auto_flag = False
             self.combo_selected = True
             self.manual_flag = False
+            self.bluetooth_selected = False
             self.setDropdownSelected()
         elif self.current_index == 2:
             self.auto_flag = False
             self.combo_selected = False
             self.manual_flag = True
+            self.bluetooth_selected = False
             self.setManualIconSelected()
-
+        elif self.current_index == 3:
+            self.auto_flag = False
+            self.combo_box = False
+            self.manual_flag = False
+        self.bluetooth_selected = True
+        self.setBluetoothIconSelected()
+        
     def update_button_1(self):
         # First update encoder position
         self.update_current_index()
@@ -675,6 +691,9 @@ class MainWindow(QMainWindow):
                 border-radius: 3px;
             }
         """)
+
+    def setBluetoothIconSelected(self):
+        return 0
 
     def sat_data(self, satellites, selected, observer, local_time):
         # Get data from the satellite object
