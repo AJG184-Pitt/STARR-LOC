@@ -1,10 +1,13 @@
-from PyQt6.QtGui import QFont, QPixmap, QKeyEvent
+from PyQt6.QtGui import QPixmap, QKeyEvent
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QComboBox,
-                            QLineEdit, QLabel, QGridLayout, QWidget, QVBoxLayout)
-from PyQt6.QtCore import QSize, Qt, pyqtSignal, QEvent
+                            QLineEdit, QLabel, QGridLayout, QWidget)
+from PyQt6.QtCore import Qt, pyqtSignal, QEvent, QTimer
 
 import sys
 import os
+from serial import Serial
+from time import sleep
+import time
 
 # Add the relative path (this might work in some cases)
 sys.path.append('../sgp4')
@@ -64,28 +67,39 @@ class CustomComboBox(QComboBox):
 
     def keyPressEvent(self, event):
         # Ignore keys when no modifiers are pressed, but propagate to parent
-        if event.key() in (Qt.Key.Key_M, Qt.Key.Key_N, Qt.Key.Key_B, Qt.Key.Key_W, Qt.Key.Key_A, Qt.Key.Key_S, Qt.Key.Key_D, Qt.Key.Key_F) and not event.modifiers():
+        if event.key() in (Qt.Key.Key_M, Qt.Key.Key_N, Qt.Key.Key_B, Qt.Key.Key_J, Qt.Key.Key_K, Qt.Key.Key_L) and not event.modifiers():
             event.ignore()
             return
         return super().keyPressEvent(event)
 
 class MainWindow(QMainWindow):
+    
+    auto_track = pyqtSignal()
+    
     def __init__(self):
         super().__init__()
 
+        self.ser = Serial('/dev/ttyUSB0', 115200, timeout=1)
+        self.ser.rts = False
+        self.ser.dtr = False
+
         # Information gathering
-        # self.tle_file_path = "../bluetooth/tle.data"
-        # self.gps_file_path = "../bluetooth/gps.data"
-        # self.tle_data = sgpb.read_tle_file(self.tle_file_path)
-
-        file_path = "../sgp4/tle.txt"
-        self.tle_data = sgpb.read_tle_file(file_path)
+        self.tle_file_path = "../bluetooth/tle.data"
+        self.gps_file_path = "../bluetooth/gps.data"
         
-        self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
+        if os.path.exists(self.tle_file_path):
         
-        # observer = Observer(file_path=self.gps_file_path)
-        observer = Observer(lat=40.4442, lon=-79.9557, alt=300)
+            self.tle_data = sgpb.read_tle_file(self.tle_file_path)
 
+            self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
+
+        if os.path.exists(self.gps_file_path):
+            self.observer = Observer(file_path=self.gps_file_path)
+
+        self.process = None
+        self.process_running = False
+        self.auto_track_process = multiprocessing.Process
+                
         et = pytz.timezone("US/Eastern")
         local_time = datetime.datetime.now(et)
         # utc_time = local_time.astimezone(pytz.utc)
@@ -95,31 +109,31 @@ class MainWindow(QMainWindow):
         self.setFixedSize(800, 480)
 
         # Create central widget and layout
-        central_widget = QWidget()
+        self.central_widget = QWidget()
         background_image = "Assets/star_background"
-        central_widget.setStyleSheet(f"""
+        self.central_widget.setStyleSheet(f"""
             QWidget {{
                 background-image: url({background_image});            
                 background-repeat: no-repeat;
                 background-position: center;
             }}
         """)
-        self.setCentralWidget(central_widget)
-        grid = QGridLayout(central_widget)        
-        
+        self.setCentralWidget(self.central_widget)
+        grid = QGridLayout(self.central_widget)
+
         # Sort list based on distance
-        self.satellites = sorted(self.satellites, key=lambda sat: sat.getAngleFrom(observer, local_time)[2])
+        self.satellites = sorted(self.satellites, key=lambda sat: sat.getAngleFrom(self.observer, local_time)[2])
         
         # Create custom combo box and populate it
         self.combo_box = CustomComboBox()
-        options = [f"{sat.name} ({sat.getAngleFrom(observer, local_time)[2][0]:.2f} kilometers | Overhead: {sat.overhead})" for sat in self.satellites]
-        self.combo_box.addItems(options)
+        # options = [f"{sat.name} ({sat.getAngleFrom(self.observer, local_time)[2]:.2f} kilometers | Overhead: {sat.overhead})" for sat in self.satellites]
+        # self.combo_box.addItems(options)
         self.combo_box.setFixedWidth(390)
         self.combo_box.setFixedHeight(40)
         
         # Call method for selected satellite
         self.combo_box.currentIndexChanged.connect(
-            lambda: self.sat_data(self.satellites, self.combo_box.currentIndex(), observer, local_time)
+            lambda: self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, local_time)
         )
 
         # Create entry widgets
@@ -131,25 +145,25 @@ class MainWindow(QMainWindow):
         self.e6 = QLineEdit()
 
         # Create interactable icons
-        self.auto_image = QLabel(central_widget)
+        self.auto_image = QLabel(self.central_widget)
         self.auto_image.setGeometry(10, 400, 64, 64)
         pixmap1 = QPixmap('Assets/auto.png')
         pixmap1 = pixmap1.scaled(64, 64)
         self.auto_image.setPixmap(pixmap1)
 
-        self.manual_image = QLabel(central_widget)
+        self.manual_image = QLabel(self.central_widget)
         self.manual_image.setGeometry(100, 400, 64, 64)
         pixmap2 = QPixmap('Assets/manual.png')
         pixmap2 = pixmap2.scaled(64, 64)
         self.manual_image.setPixmap(pixmap2)
 
-        self.bluetooth_image = QLabel(central_widget)
+        self.bluetooth_image = QLabel(self.central_widget)
         self.bluetooth_image.setGeometry(190, 400, 48, 64)
         pixmap3 = QPixmap('Assets/bluetooth.png')
         pixmap3 = pixmap3.scaled(48, 64)
         self.bluetooth_image.setPixmap(pixmap3)
 
-        self.radio_image = QLabel(central_widget)
+        self.radio_image = QLabel(self.central_widget)
         self.radio_image.setGeometry(280, 400, 32, 64)
         pixmap4 = QPixmap('Assets/radio.png')
         pixmap4 = pixmap4.scaled(32, 64)
@@ -213,9 +227,6 @@ class MainWindow(QMainWindow):
         grid.addWidget(self.label5, 8, 1, alignment=Qt.AlignmentFlag.AlignBottom)
         grid.addWidget(self.e5, 9, 1)
 
-        # Example step counter for manual operation
-        self.step_amount = 0
-        
         # Install event filter on the window itself
         self.installEventFilter(self)
 
@@ -233,9 +244,7 @@ class MainWindow(QMainWindow):
             if event.key() == Qt.Key.Key_B:
                 # Only process if in auto mode
                 if self.auto_flag:
-                    print("sending data: 1")
-                    print("sending data: 2")
-                    print("sending data: 3")
+                    print("Automatic Mode: On")               
                     # Return True to indicate the event has been handled
                     return True
 
@@ -455,7 +464,7 @@ class MainWindow(QMainWindow):
         """)
         self.bluetooth_image.setStyleSheet("border: 2px solid yellow")
         self.radio_image.setStyleSheet("")
-    
+
     def setRadioSelected(self):
         self.auto_image.setStyleSheet("")
         self.manual_image.setStyleSheet("")
@@ -498,24 +507,24 @@ class MainWindow(QMainWindow):
 
     def sat_data(self, satellites, selected, observer, local_time):
         # Get data from the satellite object
-        e1_data = satellites[selected].getAngleFrom(observer, local_time)
+        e2_data = satellites[selected].getAngleFrom(observer, local_time)
         
-        e2_data = satellites[selected].nextOverhead(observer, local_time)
-        e3_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e2_data)
+        e3_data = satellites[selected].nextOverhead(observer, local_time)
+        e4_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e3_data)
         
         # e4_data = satellites[selected].getAngleFrom(observer, local_time)
 
-        e5_data = str(observer.lat) + " , " + str(observer.lon) + " , " + str(observer.alt)
+        e5_data = f"Lat: {observer.lat:.2f}, Lon: {observer.lon:.2f}, Alt: {observer.alt:.2f}"
         
         # String formatting for displaying results
-        e1_data = "AZ: " + str(e1_data[0][0]) + " , " + "EL: " + str(e1_data[1][0])
-        e2_data = e2_data.strftime("%Y-%m-%d %H:%M:%S")
-        e3_data = str(e3_data)
-        e4_data = str("-1")
+        e2_data = f"Azimuth: {e2_data[0]:.2f}, Elevation: {e2_data[1]:.2f}"
+        e3_data = e3_data.astimezone(pytz.timezone('US/Eastern')).strftime("%Y-%m-%d %H:%M:%S")
+        e4_data = f"Minutes: {e4_data[0]}, Seconds: {e4_data[1]}"
+        # e4_data = str("-1")
         # e5_data = str(e5_data)
         
         # Pass satellite data into text boxes
-        self.e1.setText(e1_data)
+        self.e1.setText("Satellite")
         self.e2.setText(e2_data)
         self.e3.setText(e3_data)
         self.e4.setText(e4_data)
@@ -524,6 +533,8 @@ class MainWindow(QMainWindow):
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
+    
+    window.auto_track.connect(window.auto_tracking)
     window.show()
     sys.exit(app.exec())
 
