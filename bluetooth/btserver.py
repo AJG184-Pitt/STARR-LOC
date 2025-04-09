@@ -6,7 +6,6 @@ import os
 
 current_file = None
 
-
 def data_received(data):
     
     global current_file
@@ -17,28 +16,34 @@ def data_received(data):
         if not line:
             break
 
-        #print(line)
+        print(line)
 
         if (line == "GPS DATA\n"):
-            #print("switch 1\n")
+            print("switch 1\n")
             if current_file:
                 current_file.close()
-            current_file= open("gps.data", "w")
+            current_file= open("../bluetooth/gps.data", "w")
 
         elif (line == "TLE DATA\n"):
-            #print("switch 2\n")
+            print("switch 2\n")
             if current_file:
                 current_file.close()
-            current_file = open("tle.data", "w")
+            current_file = open("../bluetooth/tle.data", "w")
     
         elif (line == "END\n"):
-            #print("switch_3\n")
+            print("switch_3\n")
             if current_file:
-                current_file.close()
-            current_file = None
+                name = current_file.name
+                if os.path.basename(name) == "tle.data":
+                    print("exit bluetooth")
+                    current_file.close()
+                    os._exit(0)  # Exit the program if we are done with TLE data
+                else:
+                    current_file.close()
+                    current_file = None
 
         elif current_file:
-            #print("switch_4")
+            print("switch_4")
             current_file.write(line)
             current_file.flush()
 
@@ -57,7 +62,7 @@ def alarm_handler(signum, frame):
 # Start alarm to kill server after 60 seconds
 print("Starting Bluetooth server")
 signal.signal(signal.SIGALRM, alarm_handler)
-signal.alarm( 60 )
+signal.alarm( 30 )
 
 # Start the server and wait for a connection
 s = BluetoothServer(data_received)

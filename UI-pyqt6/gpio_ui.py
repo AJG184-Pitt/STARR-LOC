@@ -5,6 +5,7 @@ from PyQt6.QtCore import QSize, Qt, pyqtSignal, QEvent, QTimer
 
 import sys
 import os
+from serial import Serial
 
 # Add the relative path (this might work in some cases)
 sys.path.append('../sgp4')
@@ -265,6 +266,12 @@ class MainWindow(QMainWindow):
         pixmap2 = pixmap2.scaled(64, 64)
         self.manual_image.setPixmap(pixmap2)
 
+        self.bluetooth_image = QLabel(central_widget)
+        self.bluetooth_image.setGeometry(190, 400, 48, 64)
+        pixmap3 = QPixmap('Assets/bluetooth.png')
+        pixmap3 = pixmap3.scaled(48, 64)
+        self.bluetooth_image.setPixmap(pixmap3)
+
         # Labels for satellite information
         self.label1 = QLabel("Current Angle:")
         self.label2 = QLabel("Next Satellite Overhead Period:")
@@ -330,10 +337,11 @@ class MainWindow(QMainWindow):
         self.auto_flag = False
         self.manual_flag = False
         self.combo_selected = False
+        self.bluetooth_selected = False
         
         # Initialize gpio class object
         self.gpio = GpioSetup()
-        self.selected_labels = [0, 1, 2]
+        self.selected_labels = [0, 1, 2, 3]
         self.current_index = 0
         
         # Encoder checks
@@ -395,18 +403,27 @@ class MainWindow(QMainWindow):
             self.auto_flag = True
             self.combo_selected = False
             self.manual_flag = False
+            self.bluetooth_selected = False
             self.setAutoIconSelected()
         elif self.current_index == 1:
             self.auto_flag = False
             self.combo_selected = True
             self.manual_flag = False
+            self.bluetooth_selected = False
             self.setDropdownSelected()
         elif self.current_index == 2:
             self.auto_flag = False
             self.combo_selected = False
             self.manual_flag = True
+            self.bluetooth_selected = False
             self.setManualIconSelected()
-
+        elif self.current_index == 3:
+            self.auto_flag = False
+            self.combo_box = False
+            self.manual_flag = False
+        self.bluetooth_selected = True
+        self.setBluetoothIconSelected()
+        
     def update_button_1(self):
         # First update encoder position
         self.update_current_index()
@@ -421,10 +438,97 @@ class MainWindow(QMainWindow):
             elif self.manual_flag:
                 if self.button_action_pending == False:  # Prevent repeated actions
                     print("Manual mode pending integration")
+                    self.manual_encoder_control()
                     self.button_action_pending = True
         else:
             # Button is released
             self.button_action_pending = False
+
+    def manual_encoder_control(self):
+        """
+        Toggle-able serial control method that sends encoder values over serial.
+        This method will run until the button is pressed again to exit.
+        
+        Designed to be called directly when the button is pressed.
+        """
+        # Flags to track state
+        self.serial_active = not getattr(self, 'serial_active', False)
+        
+        # If we're turning off the connection, just exit
+        if not self.serial_active:
+            print("Stopping serial control")
+            return
+        
+        print("Starting serial control")
+        try:
+            # Open serial connection
+            ser = Serial('/dev/ttyUSB0', 115200, timeout=1)
+            time.sleep(0.5)  # Give serial connection time to initialize
+            
+            print("Serial connection established")
+
+            counter1 = 0
+            counter2 = 0
+            prev_1 = 0
+            prev_2 = 0
+            
+            # Run until button is pressed again
+            while self.serial_active:
+                # Read encoder 1
+                encoder1_change = self.gpio.read_encoder()
+                encoder2_change = self.gpio.read_encoder_2()
+                
+                if encoder1_change != 0:
+                    # Send encoder 1 data when it changes
+                    if encoder1_change == 1:
+                        counter1 += 1
+                    elif encoder1_change == -1:
+                        counter1 -= 1
+                    
+                    print(f"Encoder 1 w/ counter: {encoder1_change} {counter1}\n")
+                
+                elif encoder2_change != 0:
+                    if encoder2_change == 1:
+                        counter2 += 1
+                    elif encoder2_change == -1:
+                        counter2 -= 1
+                    
+                    if counter2 <= 0:
+                        counter2 = 0
+                    
+                    print(f"Encoder 2 w/ counter: {encoder2_change} {counter2}")
+                
+                print(f"{counter1} {counter2}\n")
+                if prev_1 != counter1 or prev_2 != counter2:
+                    send_data = f"{counter1} {counter2}\n"
+                    ser.write(send_data.encode())
+
+                    prev_1 = counter1
+                    prev_2 = counter2
+                
+                # if encoder2_change != 0:
+                #     # Send encoder 2 data when it changes
+                #     print(f"Sending encoder 2: {encoder2_change}")
+                #     ser.write(f"E2:{encoder2_change}\n".encode())
+                
+                # Check if button is pressed to exit the loop
+                if self.gpio.read_button() == True:
+                    time.sleep(0.1)  # Debounce
+                    print("Button pressed, exiting serial control")
+                    self.serial_active = False
+                    break
+                
+                time.sleep(0.01)  # Small delay to prevent CPU hogging
+                
+        except Exception as e:
+            print(f"Serial communication error: {e}")
+        finally:
+            try:
+                ser.close()
+                print("Serial connection closed")
+            except:
+                pass
+            self.serial_active = False
         
     def eventFilter(self, obj, event):
         # Check if the event is a key press event
@@ -587,6 +691,9 @@ class MainWindow(QMainWindow):
                 border-radius: 3px;
             }
         """)
+
+    def setBluetoothIconSelected(self):
+        return 0
 
     def sat_data(self, satellites, selected, observer, local_time):
         # Get data from the satellite object

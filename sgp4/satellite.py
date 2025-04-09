@@ -13,7 +13,7 @@ class Satellite:
         self.tle1 = tle_line1
         self.tle2 = tle_line2
         self.last_pos = 0
-        self.observer_angle = 0
+        self.observer_angle = (0, 0, 0.0)
         self.overhead = False
         self.next_overhead_instance = 0
         self.next_overhead_duration = 0
@@ -23,6 +23,7 @@ class Satellite:
         """
         Get the ECI coordinates of the satellite. Returns Tuple (x, y, z) in km
         """
+        date_time = date_time.astimezone(pytz.utc)
         self.last_pos = sgpb.sgp4_run(self.tle1, self.tle2, date_time)
         return self.last_pos
 
@@ -33,9 +34,12 @@ class Satellite:
     
         r = self.getPosAtTime(date_time)
         # Convert to meters
+
         r = tuple(i*1000 for i in r)
 
-        self.observer_angle = eci2aer(r[0], r[1], r[2], observer.lat, observer.lon, observer.alt, date_time, deg=True)
+        observer_angle_bad_format = eci2aer(r[0], r[1], r[2], observer.lat, observer.lon, observer.alt, date_time, deg=True)
+        
+        self.observer_angle = (observer_angle_bad_format[0][0], observer_angle_bad_format[1][0], observer_angle_bad_format[2][0])
         return self.observer_angle
         
 

@@ -18,7 +18,7 @@ satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in tle_data]
 
 # Observer at the Cathedral of Learning
 # (Assuming observer is at the altitude of the geodetic estimation)
-observer = Observer(40.444, -79.953, 300)
+observer = Observer(lat=40.444, lon=-79.953, alt=300)
 
 
 et = pytz.timezone('US/Eastern')
@@ -29,7 +29,10 @@ utc_time = local_time.astimezone(pytz.utc)
 
 
 r = satellites[0].getPosAtTime(utc_time)
-#print(f"Current Position of satellite {satellites[0].name} is (x={r[0]}, y={r[1]}, z={r[2]}) [km].")
+print(f"Current Position of satellite {satellites[0].name} is (x={r[0]}, y={r[1]}, z={r[2]}) [km].")
+
+vec = satellites[0].getAngleFrom(observer, utc_time)
+print(f"Current angle from observer to satellite {satellites[0].name} is (Azimuth={vec[0]}, Elevation={vec[1]}, Distance={vec[2]}) [degrees, degrees, meters].")
 
 
 # Find satellite with name "AO-07"
