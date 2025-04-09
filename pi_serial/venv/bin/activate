@@ -1,4 +1,5 @@
 # This file must be used with "source bin/activate" *from bash*
+
 # You cannot run it directly
 
 deactivate () {
@@ -13,6 +14,7 @@ deactivate () {
         export PYTHONHOME
         unset _OLD_VIRTUAL_PYTHONHOME
     fi
+
 
     # Call hash to forget past commands. Without forgetting
     # past commands the $PATH changes we made may not be respected
@@ -64,6 +66,7 @@ if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT:-}" ] ; then
     VIRTUAL_ENV_PROMPT='(venv) '
     export VIRTUAL_ENV_PROMPT
 fi
+
 
 # Call hash to forget past commands. Without forgetting
 # past commands the $PATH changes we made may not be respected
