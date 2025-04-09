@@ -429,20 +429,63 @@ class MainWindow(QMainWindow):
             self.button_action_pending = False
 
     def manual_encoder_control(self):
-        ser = Serial('/dev/ttyACM0', 115200, timeout=1)
-        time.sleep(0.5)
+        """
+        Toggle-able serial control method that sends encoder values over serial.
+        This method will run until the button is pressed again to exit.
         
-        while True:
-            data1 = self.gpio.read_encoder()
-            ser.write(data1.encode())
-            time.sleep(0.5)
-
-            data2 = self.gpio.read_encoder_2()
-            ser.write(data2.encode())
-            time.sleep(0.5)
-
-            if self.gpio.read_button():
-                break
+        Designed to be called directly when the button is pressed.
+        """
+        # Flags to track state
+        self.serial_active = not getattr(self, 'serial_active', False)
+        
+        # If we're turning off the connection, just exit
+        if not self.serial_active:
+            print("Stopping serial control")
+            return
+        
+        print("Starting serial control")
+        try:
+            # Open serial connection
+            ser = Serial('/dev/ttyACM0', 115200, timeout=1)
+            time.sleep(0.5)  # Give serial connection time to initialize
+            
+            print("Serial connection established")
+            
+            # Run until button is pressed again
+            while self.serial_active:
+                # Read encoder 1
+                encoder1_change = self.gpio.read_encoder()
+                if encoder1_change != 0:
+                    # Send encoder 1 data when it changes
+                    print(f"Sending encoder 1: {encoder1_change}")
+                    ser.write(f"E1:{encoder1_change}\n".encode())
+                
+                # Read encoder 2
+                encoder2_change = self.gpio.read_encoder_2()
+                if encoder2_change != 0:
+                    # Send encoder 2 data when it changes
+                    print(f"Sending encoder 2: {encoder2_change}")
+                    ser.write(f"E2:{encoder2_change}\n".encode())
+                
+                # Check if button is pressed to exit the loop
+                if self.gpio.read_button():
+                    time.sleep(0.1)  # Debounce
+                    if self.gpio.read_button():  # Double-check after debounce
+                        print("Button pressed, exiting serial control")
+                        self.serial_active = False
+                        break
+                
+                time.sleep(0.01)  # Small delay to prevent CPU hogging
+                
+        except Exception as e:
+            print(f"Serial communication error: {e}")
+        finally:
+            try:
+                ser.close()
+                print("Serial connection closed")
+            except:
+                pass
+            self.serial_active = False
         
     def eventFilter(self, obj, event):
         # Check if the event is a key press event
