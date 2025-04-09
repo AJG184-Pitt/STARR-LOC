@@ -350,7 +350,7 @@ class MainWindow(QMainWindow):
         self.button_action_pending = False  # Add this as a class variable
         self.button2_action_pending = False  # Add this as a class variable
         self.encoder_timer = QTimer(self)
-        self.encoder_timer.timeout.connect(self.update_button)  # Connect to new method
+        self.encoder_timer.timeout.connect(self.update_button_1)  # Connect to new method
         self.encoder_timer.start(50)  # Check every 50ms
         
         # Temp code for testing
@@ -407,7 +407,7 @@ class MainWindow(QMainWindow):
             self.manual_flag = True
             self.setManualIconSelected()
 
-    def update_button(self):
+    def update_button_1(self):
         # First update encoder position
         self.update_current_index()
         
@@ -420,8 +420,7 @@ class MainWindow(QMainWindow):
                     print(f"Auto toggle Mode: {'Active' if self.auto_toggle_active else 'Inactive'}")
             elif self.manual_flag:
                 if self.button_action_pending == False:  # Prevent repeated actions
-                    print(f"Example Step: {self.step_amount}")
-                    self.step_amount += 1
+                    print("Manual mode pending integration")
                     self.button_action_pending = True
         else:
             # Button is released
