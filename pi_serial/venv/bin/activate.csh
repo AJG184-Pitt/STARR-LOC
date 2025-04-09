@@ -8,7 +8,7 @@ alias deactivate 'test $?_OLD_VIRTUAL_PATH != 0 && setenv PATH "$_OLD_VIRTUAL_PA
 # Unset irrelevant variables.
 deactivate nondestructive
 
-setenv VIRTUAL_ENV /home/aidan/Desktop/STARR-LOC/pi_serial/venv
+setenv VIRTUAL_ENV '/home/adam-nichols/Documents/Pitt/ECE 1896/Git repo/STARR-LOC/pi_serial/venv'
 
 set _OLD_VIRTUAL_PATH="$PATH"
 setenv PATH "$VIRTUAL_ENV/"bin":$PATH"
