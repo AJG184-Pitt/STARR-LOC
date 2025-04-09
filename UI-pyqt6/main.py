@@ -169,6 +169,12 @@ class MainWindow(QMainWindow):
         pixmap2 = pixmap2.scaled(64, 64)
         self.manual_image.setPixmap(pixmap2)
 
+        self.bluetooth_image = QLabel(central_widget)
+        self.bluetooth_image.setGeometry(190, 400, 48, 64)
+        pixmap3 = QPixmap('Assets/bluetooth.png')
+        pixmap3 = pixmap3.scaled(48, 64)
+        self.bluetooth_image.setPixmap(pixmap3)
+
         # Labels for satellite information
         self.label1 = QLabel("Current Angle:")
         self.label2 = QLabel("Next Satellite Overhead Period:")

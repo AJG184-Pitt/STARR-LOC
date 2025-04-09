@@ -1,0 +1,1127 @@
+options:
+  parameters:
+    author: adam-nichols
+    catch_exceptions: 'True'
+    category: '[GRC Hier Blocks]'
+    cmake_opt: ''
+    comment: ''
+    copyright: ''
+    description: ''
+    gen_cmake: 'On'
+    gen_linking: dynamic
+    generate_options: qt_gui
+    hier_block_src_path: '.:'
+    id: ece_1896_nichols_voice_detection_wbfm
+    max_nouts: '0'
+    output_language: python
+    placement: (0,0)
+    qt_qss_theme: ''
+    realtime_scheduling: ''
+    run: 'True'
+    run_command: '{python} -u {filename}'
+    run_options: prompt
+    sizing_mode: fixed
+    thread_safe_setters: ''
+    title: ECE 1896 WBFM Auto Squelch
+    window_size: (1000,1000)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 8]
+    rotation: 0
+    state: enabled
+
+blocks:
+- name: RF_samp_rate
+  id: variable
+  parameters:
+    comment: ''
+    value: '480000'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [184, 264.0]
+    rotation: 0
+    state: enabled
+- name: audio_samp_rate
+  id: variable
+  parameters:
+    comment: ''
+    value: '48000'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [448, 808.0]
+    rotation: 0
+    state: enabled
+- name: carrier_freq
+  id: variable_qtgui_range
+  parameters:
+    comment: ''
+    gui_hint: ''
+    label: ''
+    min_len: '200'
+    orient: QtCore.Qt.Horizontal
+    rangeType: float
+    start: int(86.1e6)
+    step: int(200e3)
+    stop: int(108.1e6)
+    value: int(92.1e6)
+    widget: counter_slider
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [288, 120.0]
+    rotation: 0
+    state: enabled
+- name: int_length
+  id: variable
+  parameters:
+    comment: ''
+    value: '8000'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [760, 552.0]
+    rotation: 0
+    state: enabled
+- name: rf_gain
+  id: variable_qtgui_range
+  parameters:
+    comment: ''
+    gui_hint: ''
+    label: ''
+    min_len: '200'
+    orient: QtCore.Qt.Horizontal
+    rangeType: float
+    start: '10'
+    step: '1'
+    stop: '64'
+    value: '40'
+    widget: counter_slider
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [184, 120.0]
+    rotation: 0
+    state: enabled
+- name: thresh
+  id: variable_qtgui_range
+  parameters:
+    comment: ''
+    gui_hint: ''
+    label: ''
+    min_len: '200'
+    orient: QtCore.Qt.Horizontal
+    rangeType: float
+    start: '0'
+    step: '.01'
+    stop: '1'
+    value: '.5'
+    widget: counter_slider
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [912, 464.0]
+    rotation: 0
+    state: enabled
+- name: analog_agc_xx_0
+  id: analog_agc_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    gain: '1.0'
+    max_gain: '256000'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    rate: 1e-4
+    reference: '.5'
+    type: complex
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [232, 360.0]
+    rotation: 0
+    state: enabled
+- name: analog_fm_demod_cf_0
+  id: analog_fm_demod_cf
+  parameters:
+    affinity: ''
+    alias: ''
+    audio_decim: int(RF_samp_rate/audio_samp_rate)
+    audio_pass: '15000'
+    audio_stop: '16000'
+    chan_rate: RF_samp_rate
+    comment: ''
+    deviation: '75000'
+    gain: '1.0'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    tau: 75e-6
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [448, 876.0]
+    rotation: 0
+    state: enabled
+- name: audio_sink_0
+  id: audio_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    device_name: ''
+    num_inputs: '1'
+    ok_to_block: 'True'
+    samp_rate: audio_samp_rate
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [912, 944.0]
+    rotation: 0
+    state: enabled
+- name: blocks_char_to_float_0
+  id: blocks_char_to_float
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    scale: '1'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [384, 1096.0]
+    rotation: 0
+    state: enabled
+- name: blocks_complex_to_mag_0
+  id: blocks_complex_to_mag
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1080, 408.0]
+    rotation: 0
+    state: enabled
+- name: blocks_complex_to_mag_0_0
+  id: blocks_complex_to_mag
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1080, 456.0]
+    rotation: 0
+    state: enabled
+- name: blocks_conjugate_cc_0
+  id: blocks_conjugate_cc
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [432, 392.0]
+    rotation: 0
+    state: enabled
+- name: blocks_conjugate_cc_0_0
+  id: blocks_conjugate_cc
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [440, 488.0]
+    rotation: 0
+    state: enabled
+- name: blocks_delay_0
+  id: blocks_delay
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    delay: '1'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_ports: '1'
+    showports: 'False'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [440, 528.0]
+    rotation: 0
+    state: enabled
+- name: blocks_integrate_xx_0
+  id: blocks_integrate_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    decim: int_length
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [760, 496.0]
+    rotation: 0
+    state: enabled
+- name: blocks_integrate_xx_0_0
+  id: blocks_integrate_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    decim: int_length
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [760, 400.0]
+    rotation: 0
+    state: enabled
+- name: blocks_multiply_const_vxx_1
+  id: blocks_multiply_const_vxx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    const: thresh
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [912, 400.0]
+    rotation: 0
+    state: enabled
+- name: blocks_multiply_xx_0
+  id: blocks_multiply_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_inputs: '2'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [632, 392.0]
+    rotation: 0
+    state: enabled
+- name: blocks_multiply_xx_1
+  id: blocks_multiply_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_inputs: '2'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [632, 488.0]
+    rotation: 0
+    state: enabled
+- name: blocks_multiply_xx_2
+  id: blocks_multiply_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_inputs: '2'
+    type: float
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [752, 936.0]
+    rotation: 0
+    state: enabled
+- name: blocks_repeat_0
+  id: blocks_repeat
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    interp: '800'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    type: float
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [544, 1096.0]
+    rotation: 0
+    state: enabled
+- name: blocks_sub_xx_0
+  id: blocks_sub_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_inputs: '2'
+    type: float
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1304, 416.0]
+    rotation: 0
+    state: enabled
+- name: digital_binary_slicer_fb_0
+  id: digital_binary_slicer_fb
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [216, 1104.0]
+    rotation: 0
+    state: enabled
+- name: digital_costas_loop_cc_0
+  id: digital_costas_loop_cc
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    order: '2'
+    use_snr: 'False'
+    w: 2*3.1415/100
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [424, 200.0]
+    rotation: 0
+    state: enabled
+- name: epy_block_0
+  id: epy_block
+  parameters:
+    _source_code: "import numpy as np\nimport wave\nimport os\nimport time\nfrom gnuradio\
+      \ import gr\nfrom pydub import AudioSegment\nfrom pydub.generators import Sine\n\
+      \nclass save_mp3_on_trigger(gr.sync_block):\n    \"\"\"\n    Embedded Python\
+      \ Block that records float samples into an MP3 file when a trigger signal is\
+      \ detected.\n    Input 1 is the float audio stream. Input 2 is the float trigger\
+      \ signal.\n    \"\"\"\n    def __init__(self, sample_rate=48000):\n        gr.sync_block.__init__(\n\
+      \            self,\n            name=\"save_mp3_on_trigger\",\n            in_sig=[np.float32,\
+      \ np.float32],  # Float samples and trigger signal\n            out_sig=None\n\
+      \        )\n        self.sample_rate = sample_rate\n        self.recording =\
+      \ False\n        self.audio_buffer = []\n        self.output_dir = \"recordings\"\
+      \n        if not os.path.exists(self.output_dir):\n            os.makedirs(self.output_dir)\n\
+      \n    def start_new_recording(self):\n        timestamp = time.strftime(\"%Y-%m-%d_%H-%M-%S\"\
+      )\n        self.filename = os.path.join(self.output_dir, f\"recording_{timestamp}.wav\"\
+      )\n        self.audio_buffer = []\n        print(f\"Recording started: {self.filename}\"\
+      )\n\n    def stop_and_save(self):\n        if self.audio_buffer:\n         \
+      \   temp_wav = self.filename\n            with wave.open(temp_wav, 'w') as wf:\n\
+      \                wf.setnchannels(1)\n                wf.setsampwidth(2)\n  \
+      \              wf.setframerate(self.sample_rate)\n                wf.writeframes(np.array(self.audio_buffer,\
+      \ dtype=np.int16).tobytes())\n            \n            audio = AudioSegment.from_wav(temp_wav)\n\
+      \            mp3_filename = temp_wav.replace(\".wav\", \".mp3\")\n         \
+      \   audio.export(mp3_filename, format=\"mp3\")\n            os.remove(temp_wav)\
+      \  # Delete temporary WAV file\n            print(f\"Saved recording: {mp3_filename}\"\
+      )\n        self.audio_buffer = []\n\n    def work(self, input_items, output_items):\n\
+      \        samples = input_items[0]\n        trigger = input_items[1]\n      \
+      \  \n        for i in range(len(samples)):\n            if trigger[i] == 1:\n\
+      \                if not self.recording:\n                    self.recording\
+      \ = True\n                    self.start_new_recording()\n                self.audio_buffer.append(int(samples[i]\
+      \ * 32767))\n            elif self.recording:\n                self.stop_and_save()\n\
+      \                self.recording = False\n\n        return len(samples)\n"
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    sample_rate: '48000'
+  states:
+    _io_cache: ('save_mp3_on_trigger', 'save_mp3_on_trigger', [('sample_rate', '48000')],
+      [('0', 'float', 1), ('1', 'float', 1)], [], '\n    Embedded Python Block that
+      records float samples into an MP3 file when a trigger signal is detected.\n    Input
+      1 is the float audio stream. Input 2 is the float trigger signal.\n    ', ['sample_rate'])
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [912, 1072.0]
+    rotation: 0
+    state: enabled
+- name: epy_block_0_0
+  id: epy_block
+  parameters:
+    _source_code: "import numpy as np\nimport wave\nimport os\nimport time\nfrom gnuradio\
+      \ import gr\nfrom pydub import AudioSegment\nfrom pydub.generators import Sine\n\
+      \nclass save_mp3_on_trigger(gr.sync_block):\n    \"\"\"\n    Embedded Python\
+      \ Block that records float samples into an MP3 file when a trigger signal is\
+      \ detected.\n    Input 1 is the float audio stream. Input 2 is the float trigger\
+      \ signal.\n    \"\"\"\n    def __init__(self, sample_rate=48000):\n        gr.sync_block.__init__(\n\
+      \            self,\n            name=\"save_mp3_on_trigger\",\n            in_sig=[np.float32,\
+      \ np.float32],  # Float samples and trigger signal\n            out_sig=None\n\
+      \        )\n        self.sample_rate = sample_rate\n        self.recording =\
+      \ False\n        self.audio_buffer = []\n        self.output_dir = \"recordings\"\
+      \n        if not os.path.exists(self.output_dir):\n            os.makedirs(self.output_dir)\n\
+      \n    def start_new_recording(self):\n        timestamp = time.strftime(\"%Y-%m-%d_%H-%M-%S\"\
+      )\n        self.filename = os.path.join(self.output_dir, f\"recording_{timestamp}.wav\"\
+      )\n        self.audio_buffer = []\n        print(f\"Recording started: {self.filename}\"\
+      )\n\n    def stop_and_save(self):\n        if self.audio_buffer:\n         \
+      \   temp_wav = self.filename\n            with wave.open(temp_wav, 'w') as wf:\n\
+      \                wf.setnchannels(1)\n                wf.setsampwidth(2)\n  \
+      \              wf.setframerate(self.sample_rate)\n                wf.writeframes(np.array(self.audio_buffer,\
+      \ dtype=np.int16).tobytes())\n            \n            audio = AudioSegment.from_wav(temp_wav)\n\
+      \            mp3_filename = temp_wav.replace(\".wav\", \".mp3\")\n         \
+      \   audio.export(mp3_filename, format=\"mp3\")\n            os.remove(temp_wav)\
+      \  # Delete temporary WAV file\n            print(f\"Saved recording: {mp3_filename}\"\
+      )\n        self.audio_buffer = []\n\n    def work(self, input_items, output_items):\n\
+      \        samples = input_items[0]\n        trigger = input_items[1]\n      \
+      \  \n        for i in range(len(samples)):\n            if trigger[i] == 1:\n\
+      \                if not self.recording:\n                    self.recording\
+      \ = True\n                    self.start_new_recording()\n                self.audio_buffer.append(int(samples[i]\
+      \ * 32767))\n            elif self.recording:\n                self.stop_and_save()\n\
+      \                self.recording = False\n\n        return len(samples)\n"
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    sample_rate: '48000'
+  states:
+    _io_cache: ('save_mp3_on_trigger', 'save_mp3_on_trigger', [('sample_rate', '48000')],
+      [('0', 'float', 1), ('1', 'float', 1)], [], '\n    Embedded Python Block that
+      records float samples into an MP3 file when a trigger signal is detected.\n    Input
+      1 is the float audio stream. Input 2 is the float trigger signal.\n    ', ['sample_rate'])
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1232, 1072.0]
+    rotation: 0
+    state: disabled
+- name: epy_block_0_1
+  id: epy_block
+  parameters:
+    _source_code: "import numpy as np\nimport wave\nimport os\nimport time\nfrom gnuradio\
+      \ import gr\nfrom pydub import AudioSegment\n\nclass save_mp3_on_trigger(gr.sync_block):\n\
+      \    \"\"\"\n    Embedded Python Block that records float samples into an MP3\
+      \ file when a trigger signal is detected.\n    Input 1 is the float audio stream.\
+      \ Input 2 is the float trigger signal.\n    \"\"\"\n    def __init__(self, sample_rate=48000):\n\
+      \        gr.sync_block.__init__(\n            self,\n            name=\"save_mp3_on_trigger\"\
+      ,\n            in_sig=[np.float32, np.float32],  # Float samples and trigger\
+      \ signal\n            out_sig=None\n        )\n        self.sample_rate = sample_rate\n\
+      \        self.recording = False\n        self.audio_buffer = []\n        self.output_dir\
+      \ = \"recordings\"\n        self.start_time = None\n        if not os.path.exists(self.output_dir):\n\
+      \            os.makedirs(self.output_dir)\n        self.filename = None\n\n\
+      \    def start_new_recording(self):\n        timestamp = time.strftime(\"%Y-%m-%d_%H-%M-%S\"\
+      )\n        self.filename = os.path.join(self.output_dir, f\"recording_{timestamp}.wav\"\
+      )\n        self.audio_buffer = []\n        self.start_time = time.time()\n \
+      \       print(f\"Recording started: {self.filename}\")\n\n    def stop_and_save(self):\n\
+      \        if len(self.audio_buffer) > 0 and self.start_time and (time.time()\
+      \ - self.start_time) >= 1:\n            temp_wav = self.filename\n         \
+      \   with wave.open(temp_wav, 'wb') as wf:\n                wf.setnchannels(1)\n\
+      \                wf.setsampwidth(2)\n                wf.setframerate(self.sample_rate)\n\
+      \                wf.writeframes(np.array(self.audio_buffer, dtype=np.int16).tobytes())\n\
+      \            \n            audio = AudioSegment.from_wav(temp_wav)\n       \
+      \     mp3_filename = temp_wav.replace(\".wav\", \".mp3\")\n            audio.export(mp3_filename,\
+      \ format=\"mp3\")\n            os.remove(temp_wav)  # Delete temporary WAV file\n\
+      \            print(f\"Saved recording: {mp3_filename}\")\n        else:\n  \
+      \          print(\"Recording discarded: Less than 1 second\")\n        \n  \
+      \      self.audio_buffer = []\n        self.start_time = None\n\n    def work(self,\
+      \ input_items, output_items):\n        samples = input_items[0]\n        trigger\
+      \ = input_items[1]\n        \n        for i in range(len(samples)):\n      \
+      \      if trigger[i] == 1:\n                if not self.recording:\n       \
+      \             self.recording = True\n                    self.start_new_recording()\n\
+      \                self.audio_buffer.append(int(samples[i] * 32767))\n       \
+      \     elif self.recording:\n                # Ensure at least 1 second of recording\
+      \ before stopping\n                if self.start_time and (time.time() - self.start_time)\
+      \ >= 1:\n                    self.stop_and_save()\n                    self.recording\
+      \ = False\n                else:\n                    print(\"Recording discarded:\
+      \ Less than 1 second\")\n                    self.audio_buffer = []\n      \
+      \              self.recording = False\n\n        return len(samples)\n\n"
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    sample_rate: '48000'
+  states:
+    _io_cache: ('save_mp3_on_trigger', 'save_mp3_on_trigger', [('sample_rate', '48000')],
+      [('0', 'float', 1), ('1', 'float', 1)], [], '\n    Embedded Python Block that
+      records float samples into an MP3 file when a trigger signal is detected.\n    Input
+      1 is the float audio stream. Input 2 is the float trigger signal.\n    ', ['sample_rate'])
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1232, 1152.0]
+    rotation: 0
+    state: disabled
+- name: epy_block_0_2
+  id: epy_block
+  parameters:
+    _source_code: "import numpy as np\nimport wave\nimport os\nimport time\nfrom gnuradio\
+      \ import gr\nfrom pydub import AudioSegment\n\nclass save_mp3_on_trigger(gr.sync_block):\n\
+      \    \"\"\"\n    Embedded Python Block that records float samples into an MP3\
+      \ file when a trigger signal is detected.\n    Input 1 is the float audio stream.\
+      \ Input 2 is the float trigger signal.\n    \"\"\"\n    def __init__(self, sample_rate=48000):\n\
+      \        gr.sync_block.__init__(\n            self,\n            name=\"save_mp3_on_trigger\"\
+      ,\n            in_sig=[np.float32, np.float32],  # Float samples and trigger\
+      \ signal\n            out_sig=None\n        )\n        self.sample_rate = sample_rate\n\
+      \        self.recording = False\n        self.audio_buffer = []\n        self.output_dir\
+      \ = \"recordings\"\n        self.start_time = None\n        if not os.path.exists(self.output_dir):\n\
+      \            os.makedirs(self.output_dir)\n        self.filename = None\n  \
+      \      self.min_samples = self.sample_rate  # Minimum 1 second worth of samples\n\
+      \n    def start_new_recording(self):\n        timestamp = time.strftime(\"%Y-%m-%d_%H-%M-%S\"\
+      )\n        self.filename = os.path.join(self.output_dir, f\"recording_{timestamp}.wav\"\
+      )\n        self.audio_buffer = []\n        self.start_time = time.time()\n \
+      \       print(f\"Recording started: {self.filename}\")\n\n    def stop_and_save(self):\n\
+      \        if len(self.audio_buffer) >= self.min_samples:\n            with wave.open(self.filename,\
+      \ 'wb') as wf:\n                wf.setnchannels(1)\n                wf.setsampwidth(2)\n\
+      \                wf.setframerate(self.sample_rate)\n                wf.writeframes(np.array(self.audio_buffer,\
+      \ dtype=np.int16).tobytes())\n            \n            audio = AudioSegment.from_wav(self.filename)\n\
+      \            mp3_filename = self.filename.replace(\".wav\", \".mp3\")\n    \
+      \        audio.export(mp3_filename, format=\"mp3\")\n            os.remove(self.filename)\
+      \  # Delete temporary WAV file\n            print(f\"Saved recording: {mp3_filename}\"\
+      )\n        else:\n            print(\"Recording discarded: Less than 1 second\"\
+      )\n        \n        self.audio_buffer = []\n        self.start_time = None\n\
+      \        self.recording = False\n\n    def work(self, input_items, output_items):\n\
+      \        samples = input_items[0]\n        trigger = input_items[1]\n      \
+      \  \n        for i in range(len(samples)):\n            if trigger[i] == 1:\n\
+      \                if not self.recording:\n                    self.recording\
+      \ = True\n                    self.start_new_recording()\n                self.audio_buffer.append(int(samples[i]\
+      \ * 32767))\n            elif self.recording:\n                # Stop only if\
+      \ we have at least 1 second of audio\n                if len(self.audio_buffer)\
+      \ >= self.min_samples:\n                    self.stop_and_save()\n         \
+      \       else:\n                    print(\"Recording discarded: Less than 1\
+      \ second\")\n                    self.audio_buffer = []\n                  \
+      \  self.recording = False\n\n        return len(samples)\n\n"
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    sample_rate: '48000'
+  states:
+    _io_cache: ('save_mp3_on_trigger', 'save_mp3_on_trigger', [('sample_rate', '48000')],
+      [('0', 'float', 1), ('1', 'float', 1)], [], '\n    Embedded Python Block that
+      records float samples into an MP3 file when a trigger signal is detected.\n    Input
+      1 is the float audio stream. Input 2 is the float trigger signal.\n    ', ['sample_rate'])
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1232, 1232.0]
+    rotation: 0
+    state: disabled
+- name: iio_pluto_source_0
+  id: iio_pluto_source
+  parameters:
+    affinity: ''
+    alias: ''
+    bandwidth: '20000000'
+    bbdc: 'True'
+    buffer_size: '32768'
+    comment: ''
+    filter: ''
+    filter_source: '''Auto'''
+    fpass: '0'
+    frequency: carrier_freq
+    fstop: '0'
+    gain1: '''manual'''
+    len_tag_key: packet_len
+    manual_gain1: rf_gain
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    quadrature: 'True'
+    rfdc: 'True'
+    samplerate: RF_samp_rate
+    type: fc32
+    uri: ip:192.168.2.4
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 140.0]
+    rotation: 0
+    state: enabled
+- name: qtgui_auto_correlator_sink_0
+  id: qtgui_auto_correlator_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    autoScale: 'True'
+    comment: ''
+    fac_decimation: '10'
+    fac_size: '512'
+    grid: 'True'
+    gui_hint: ''
+    sampRate: RF_samp_rate
+    title: '""'
+    useDB: 'True'
+    yMax: '1'
+    yMin: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [440, 696.0]
+    rotation: 0
+    state: enabled
+- name: qtgui_time_sink_x_0
+  id: qtgui_time_sink_x
+  parameters:
+    affinity: ''
+    alias: ''
+    alpha1: '1.0'
+    alpha10: '1.0'
+    alpha2: '1.0'
+    alpha3: '1.0'
+    alpha4: '1.0'
+    alpha5: '1.0'
+    alpha6: '1.0'
+    alpha7: '1.0'
+    alpha8: '1.0'
+    alpha9: '1.0'
+    autoscale: 'False'
+    axislabels: 'True'
+    color1: blue
+    color10: dark blue
+    color2: red
+    color3: green
+    color4: black
+    color5: cyan
+    color6: magenta
+    color7: yellow
+    color8: dark red
+    color9: dark green
+    comment: ''
+    ctrlpanel: 'True'
+    entags: 'False'
+    grid: 'False'
+    gui_hint: ''
+    label1: Signal 1
+    label10: Signal 10
+    label2: Signal 2
+    label3: Signal 3
+    label4: Signal 4
+    label5: Signal 5
+    label6: Signal 6
+    label7: Signal 7
+    label8: Signal 8
+    label9: Signal 9
+    legend: 'True'
+    marker1: '-1'
+    marker10: '-1'
+    marker2: '-1'
+    marker3: '-1'
+    marker4: '-1'
+    marker5: '-1'
+    marker6: '-1'
+    marker7: '-1'
+    marker8: '-1'
+    marker9: '-1'
+    name: '"Raw Baseband Message"'
+    nconnections: '1'
+    size: '1024'
+    srate: RF_samp_rate
+    stemplot: 'False'
+    style1: '1'
+    style10: '1'
+    style2: '1'
+    style3: '1'
+    style4: '1'
+    style5: '1'
+    style6: '1'
+    style7: '1'
+    style8: '1'
+    style9: '1'
+    tr_chan: '0'
+    tr_delay: '0'
+    tr_level: '0.0'
+    tr_mode: qtgui.TRIG_MODE_FREE
+    tr_slope: qtgui.TRIG_SLOPE_POS
+    tr_tag: '""'
+    type: complex
+    update_time: '0.10'
+    width1: '1'
+    width10: '1'
+    width2: '1'
+    width3: '1'
+    width4: '1'
+    width5: '1'
+    width6: '1'
+    width7: '1'
+    width8: '1'
+    width9: '1'
+    ylabel: Amplitude
+    ymax: '1'
+    ymin: '-1'
+    yunit: '""'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [440, 592.0]
+    rotation: 0
+    state: enabled
+- name: qtgui_time_sink_x_1
+  id: qtgui_time_sink_x
+  parameters:
+    affinity: ''
+    alias: ''
+    alpha1: '1.0'
+    alpha10: '1.0'
+    alpha2: '1.0'
+    alpha3: '1.0'
+    alpha4: '1.0'
+    alpha5: '1.0'
+    alpha6: '1.0'
+    alpha7: '1.0'
+    alpha8: '1.0'
+    alpha9: '1.0'
+    autoscale: 'False'
+    axislabels: 'True'
+    color1: blue
+    color10: dark blue
+    color2: red
+    color3: green
+    color4: black
+    color5: cyan
+    color6: magenta
+    color7: yellow
+    color8: dark red
+    color9: dark green
+    comment: ''
+    ctrlpanel: 'False'
+    entags: 'False'
+    grid: 'False'
+    gui_hint: ''
+    label1: Signal 1
+    label10: Signal 10
+    label2: Signal 2
+    label3: Signal 3
+    label4: Signal 4
+    label5: Signal 5
+    label6: Signal 6
+    label7: Signal 7
+    label8: Signal 8
+    label9: Signal 9
+    legend: 'True'
+    marker1: '-1'
+    marker10: '-1'
+    marker2: '-1'
+    marker3: '-1'
+    marker4: '-1'
+    marker5: '-1'
+    marker6: '-1'
+    marker7: '-1'
+    marker8: '-1'
+    marker9: '-1'
+    name: '""'
+    nconnections: '1'
+    size: '1024'
+    srate: audio_samp_rate
+    stemplot: 'False'
+    style1: '1'
+    style10: '1'
+    style2: '1'
+    style3: '1'
+    style4: '1'
+    style5: '1'
+    style6: '1'
+    style7: '1'
+    style8: '1'
+    style9: '1'
+    tr_chan: '0'
+    tr_delay: '0'
+    tr_level: '0.0'
+    tr_mode: qtgui.TRIG_MODE_FREE
+    tr_slope: qtgui.TRIG_SLOPE_POS
+    tr_tag: '""'
+    type: float
+    update_time: '0.10'
+    width1: '1'
+    width10: '1'
+    width2: '1'
+    width3: '1'
+    width4: '1'
+    width5: '1'
+    width6: '1'
+    width7: '1'
+    width8: '1'
+    width9: '1'
+    ylabel: Amplitude
+    ymax: '1'
+    ymin: '-1'
+    yunit: '""'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [752, 1192.0]
+    rotation: 0
+    state: enabled
+- name: qtgui_time_sink_x_2
+  id: qtgui_time_sink_x
+  parameters:
+    affinity: ''
+    alias: ''
+    alpha1: '1.0'
+    alpha10: '1.0'
+    alpha2: '1.0'
+    alpha3: '1.0'
+    alpha4: '1.0'
+    alpha5: '1.0'
+    alpha6: '1.0'
+    alpha7: '1.0'
+    alpha8: '1.0'
+    alpha9: '1.0'
+    autoscale: 'False'
+    axislabels: 'True'
+    color1: blue
+    color10: dark blue
+    color2: red
+    color3: green
+    color4: black
+    color5: cyan
+    color6: magenta
+    color7: yellow
+    color8: dark red
+    color9: dark green
+    comment: ''
+    ctrlpanel: 'False'
+    entags: 'False'
+    grid: 'False'
+    gui_hint: ''
+    label1: Signal 1
+    label10: Signal 10
+    label2: Signal 2
+    label3: Signal 3
+    label4: Signal 4
+    label5: Signal 5
+    label6: Signal 6
+    label7: Signal 7
+    label8: Signal 8
+    label9: Signal 9
+    legend: 'True'
+    marker1: '-1'
+    marker10: '-1'
+    marker2: '-1'
+    marker3: '-1'
+    marker4: '-1'
+    marker5: '-1'
+    marker6: '-1'
+    marker7: '-1'
+    marker8: '-1'
+    marker9: '-1'
+    name: '"Demodulated FM"'
+    nconnections: '1'
+    size: '1024'
+    srate: audio_samp_rate
+    stemplot: 'False'
+    style1: '1'
+    style10: '1'
+    style2: '1'
+    style3: '1'
+    style4: '1'
+    style5: '1'
+    style6: '1'
+    style7: '1'
+    style8: '1'
+    style9: '1'
+    tr_chan: '0'
+    tr_delay: '0'
+    tr_level: '0.0'
+    tr_mode: qtgui.TRIG_MODE_FREE
+    tr_slope: qtgui.TRIG_SLOPE_POS
+    tr_tag: '""'
+    type: float
+    update_time: '0.10'
+    width1: '1'
+    width10: '1'
+    width2: '1'
+    width3: '1'
+    width4: '1'
+    width5: '1'
+    width6: '1'
+    width7: '1'
+    width8: '1'
+    width9: '1'
+    ylabel: Amplitude
+    ymax: '1'
+    ymin: '-1'
+    yunit: '""'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [912, 840.0]
+    rotation: 0
+    state: enabled
+- name: virtual_sink_0
+  id: virtual_sink
+  parameters:
+    alias: ''
+    comment: ''
+    stream_id: autocorr_diff
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1440, 424.0]
+    rotation: 0
+    state: enabled
+- name: virtual_sink_1
+  id: virtual_sink
+  parameters:
+    alias: ''
+    comment: ''
+    stream_id: WBFM_freq_corrected
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [680, 192.0]
+    rotation: 0
+    state: enabled
+- name: virtual_source_0
+  id: virtual_source
+  parameters:
+    alias: ''
+    comment: ''
+    stream_id: WBFM_freq_corrected
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [216, 928.0]
+    rotation: 0
+    state: enabled
+- name: virtual_source_0_0
+  id: virtual_source
+  parameters:
+    alias: ''
+    comment: ''
+    stream_id: autocorr_diff
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 1096.0]
+    rotation: 0
+    state: enabled
+- name: virtual_source_0_1
+  id: virtual_source
+  parameters:
+    alias: ''
+    comment: ''
+    stream_id: WBFM_freq_corrected
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 384.0]
+    rotation: 0
+    state: enabled
+
+connections:
+- [analog_agc_xx_0, '0', blocks_conjugate_cc_0, '0']
+- [analog_agc_xx_0, '0', blocks_conjugate_cc_0_0, '0']
+- [analog_agc_xx_0, '0', blocks_delay_0, '0']
+- [analog_agc_xx_0, '0', blocks_multiply_xx_0, '1']
+- [analog_agc_xx_0, '0', qtgui_auto_correlator_sink_0, '0']
+- [analog_agc_xx_0, '0', qtgui_time_sink_x_0, '0']
+- [analog_fm_demod_cf_0, '0', blocks_multiply_xx_2, '0']
+- [blocks_char_to_float_0, '0', blocks_repeat_0, '0']
+- [blocks_complex_to_mag_0, '0', blocks_sub_xx_0, '1']
+- [blocks_complex_to_mag_0_0, '0', blocks_sub_xx_0, '0']
+- [blocks_conjugate_cc_0, '0', blocks_multiply_xx_0, '0']
+- [blocks_conjugate_cc_0_0, '0', blocks_multiply_xx_1, '0']
+- [blocks_delay_0, '0', blocks_multiply_xx_1, '1']
+- [blocks_integrate_xx_0, '0', blocks_complex_to_mag_0_0, '0']
+- [blocks_integrate_xx_0_0, '0', blocks_multiply_const_vxx_1, '0']
+- [blocks_multiply_const_vxx_1, '0', blocks_complex_to_mag_0, '0']
+- [blocks_multiply_xx_0, '0', blocks_integrate_xx_0_0, '0']
+- [blocks_multiply_xx_1, '0', blocks_integrate_xx_0, '0']
+- [blocks_multiply_xx_2, '0', audio_sink_0, '0']
+- [blocks_multiply_xx_2, '0', epy_block_0, '0']
+- [blocks_multiply_xx_2, '0', qtgui_time_sink_x_2, '0']
+- [blocks_repeat_0, '0', blocks_multiply_xx_2, '1']
+- [blocks_repeat_0, '0', epy_block_0, '1']
+- [blocks_repeat_0, '0', qtgui_time_sink_x_1, '0']
+- [blocks_sub_xx_0, '0', virtual_sink_0, '0']
+- [digital_binary_slicer_fb_0, '0', blocks_char_to_float_0, '0']
+- [digital_costas_loop_cc_0, '0', virtual_sink_1, '0']
+- [iio_pluto_source_0, '0', digital_costas_loop_cc_0, '0']
+- [virtual_source_0, '0', analog_fm_demod_cf_0, '0']
+- [virtual_source_0_0, '0', digital_binary_slicer_fb_0, '0']
+- [virtual_source_0_1, '0', analog_agc_xx_0, '0']
+
+metadata:
+  file_format: 1
+  grc_version: 3.10.11.0
