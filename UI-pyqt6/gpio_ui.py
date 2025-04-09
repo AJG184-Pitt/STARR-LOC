@@ -468,6 +468,7 @@ class MainWindow(QMainWindow):
                         counter1 += 1
                     elif encoder1_change == -1:
                         counter1 -= 1
+                    
                     print(f"Encoder 1 w/ counter: {encoder1_change} {counter1}\n")
                 
                 elif encoder2_change != 0:
@@ -475,15 +476,19 @@ class MainWindow(QMainWindow):
                         counter2 += 1
                     elif encoder2_change == -1:
                         counter2 -= 1
+                    
+                    if counter2 <= 0:
+                        counter2 = 0
+                    
                     print(f"Encoder 2 w/ counter: {encoder2_change} {counter2}")
                 
                 print(f"{counter1} {counter2}\n")
-                time.sleep(1)
-                if prev_1 != counter1 and prev_2 != counter2:
-                    ser.write(f"{counter1} {counter2}\n".encode())
+                if prev_1 != counter1 or prev_2 != counter2:
+                    send_data = f"{counter1} {counter2}\n"
+                    ser.write(send_data.encode())
 
-                prev_1 = counter1
-                prev_2 = counter2
+                    prev_1 = counter1
+                    prev_2 = counter2
                 
                 # if encoder2_change != 0:
                 #     # Send encoder 2 data when it changes
@@ -491,12 +496,11 @@ class MainWindow(QMainWindow):
                 #     ser.write(f"E2:{encoder2_change}\n".encode())
                 
                 # Check if button is pressed to exit the loop
-                if self.gpio.read_button():
+                if self.gpio.read_button() == True:
                     time.sleep(0.1)  # Debounce
-                    if self.gpio.read_button():  # Double-check after debounce
-                        print("Button pressed, exiting serial control")
-                        self.serial_active = False
-                        break
+                    print("Button pressed, exiting serial control")
+                    self.serial_active = False
+                    break
                 
                 time.sleep(0.01)  # Small delay to prevent CPU hogging
                 
