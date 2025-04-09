@@ -11,7 +11,10 @@
 
 from PyQt5 import Qt
 from gnuradio import qtgui
+<<<<<<< HEAD
 from PyQt5 import QtCore
+=======
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
 from gnuradio import analog
 from gnuradio import audio
 from gnuradio import blocks
@@ -27,7 +30,10 @@ from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 from gnuradio import iio
 import ece_1896_nichols_voice_detection_epy_block_0_0 as epy_block_0_0  # embedded python block
+<<<<<<< HEAD
 import sip
+=======
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
 import threading
 
 
@@ -69,7 +75,11 @@ class ece_1896_nichols_voice_detection(gr.top_block, Qt.QWidget):
         # Variables
         ##################################################
         self.thresh = thresh = .5
+<<<<<<< HEAD
         self.rf_gain = rf_gain = 64
+=======
+        self.rf_gain = rf_gain = 30
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
         self.int_length = int_length = 8000
         self.carrier_freq = carrier_freq = int(147.540e6)
         self.audio_samp_rate = audio_samp_rate = 48000
@@ -80,6 +90,7 @@ class ece_1896_nichols_voice_detection(gr.top_block, Qt.QWidget):
         # Blocks
         ##################################################
 
+<<<<<<< HEAD
         self._thresh_range = qtgui.Range(0, 1, .01, .5, 200)
         self._thresh_win = qtgui.RangeWidget(self._thresh_range, self.set_thresh, "'thresh'", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._thresh_win)
@@ -297,6 +308,9 @@ class ece_1896_nichols_voice_detection(gr.top_block, Qt.QWidget):
         self._qtgui_auto_correlator_sink_0_win = self.qtgui_auto_correlator_sink_0.getWidget()
         self.top_layout.addWidget(self._qtgui_auto_correlator_sink_0_win)
         self.iio_pluto_source_0 = iio.fmcomms2_source_fc32('ip:192.168.2.4' if 'ip:192.168.2.4' else iio.get_pluto_uri(), [True, True], 32768)
+=======
+        self.iio_pluto_source_0 = iio.fmcomms2_source_fc32('ip:192.168.2.20' if 'ip:192.168.2.20' else iio.get_pluto_uri(), [True, True], 32768)
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
         self.iio_pluto_source_0.set_len_tag_key('packet_len')
         self.iio_pluto_source_0.set_frequency(carrier_freq)
         self.iio_pluto_source_0.set_samplerate(RF_samp_rate)
@@ -310,6 +324,7 @@ class ece_1896_nichols_voice_detection(gr.top_block, Qt.QWidget):
         self.digital_costas_loop_cc_0 = digital.costas_loop_cc((2*3.1415/100), 2, False)
         self.digital_binary_slicer_fb_0 = digital.binary_slicer_fb()
         self.blocks_sub_xx_0 = blocks.sub_ff(1)
+<<<<<<< HEAD
         self.blocks_repeat_0_0 = blocks.repeat(gr.sizeof_float*1, (int(int_length*audio_samp_rate/RF_samp_rate)))
         self.blocks_repeat_0 = blocks.repeat(gr.sizeof_float*1, (int(int_length*audio_samp_rate/RF_samp_rate)))
         self.blocks_nlog10_ff_0 = blocks.nlog10_ff(10, 1, 0)
@@ -328,6 +343,19 @@ class ece_1896_nichols_voice_detection(gr.top_block, Qt.QWidget):
         self.blocks_conjugate_cc_0_0 = blocks.conjugate_cc()
         self.blocks_conjugate_cc_0 = blocks.conjugate_cc()
         self.blocks_complex_to_mag_0_1 = blocks.complex_to_mag(1)
+=======
+        self.blocks_repeat_0 = blocks.repeat(gr.sizeof_float*1, (int(int_length*audio_samp_rate/RF_samp_rate)))
+        self.blocks_multiply_xx_2 = blocks.multiply_vff(1)
+        self.blocks_multiply_xx_1 = blocks.multiply_vcc(1)
+        self.blocks_multiply_xx_0 = blocks.multiply_vcc(1)
+        self.blocks_multiply_const_vxx_1 = blocks.multiply_const_cc(thresh)
+        self.blocks_multiply_const_vxx_0 = blocks.multiply_const_ff(audio_gain)
+        self.blocks_integrate_xx_0_0 = blocks.integrate_cc(int_length, 1)
+        self.blocks_integrate_xx_0 = blocks.integrate_cc(int_length, 1)
+        self.blocks_delay_0 = blocks.delay(gr.sizeof_gr_complex*1, 1)
+        self.blocks_conjugate_cc_0_0 = blocks.conjugate_cc()
+        self.blocks_conjugate_cc_0 = blocks.conjugate_cc()
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
         self.blocks_complex_to_mag_0_0 = blocks.complex_to_mag(1)
         self.blocks_complex_to_mag_0 = blocks.complex_to_mag(1)
         self.blocks_char_to_float_0 = blocks.char_to_float(1, 1)
@@ -348,12 +376,16 @@ class ece_1896_nichols_voice_detection(gr.top_block, Qt.QWidget):
         self.connect((self.analog_agc_xx_0, 0), (self.blocks_conjugate_cc_0_0, 0))
         self.connect((self.analog_agc_xx_0, 0), (self.blocks_delay_0, 0))
         self.connect((self.analog_agc_xx_0, 0), (self.blocks_multiply_xx_0, 1))
+<<<<<<< HEAD
         self.connect((self.analog_agc_xx_0, 0), (self.qtgui_auto_correlator_sink_0, 0))
         self.connect((self.analog_agc_xx_0, 0), (self.qtgui_time_sink_x_0, 0))
+=======
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
         self.connect((self.analog_nbfm_rx_0, 0), (self.blocks_multiply_xx_2, 0))
         self.connect((self.blocks_char_to_float_0, 0), (self.blocks_repeat_0, 0))
         self.connect((self.blocks_complex_to_mag_0, 0), (self.blocks_sub_xx_0, 1))
         self.connect((self.blocks_complex_to_mag_0_0, 0), (self.blocks_sub_xx_0, 0))
+<<<<<<< HEAD
         self.connect((self.blocks_complex_to_mag_0_1, 0), (self.blocks_multiply_const_vxx_2, 0))
         self.connect((self.blocks_conjugate_cc_0, 0), (self.blocks_multiply_xx_0, 0))
         self.connect((self.blocks_conjugate_cc_0_0, 0), (self.blocks_multiply_xx_1, 0))
@@ -376,12 +408,30 @@ class ece_1896_nichols_voice_detection(gr.top_block, Qt.QWidget):
         self.connect((self.blocks_repeat_0, 0), (self.epy_block_0_0, 1))
         self.connect((self.blocks_repeat_0, 0), (self.qtgui_time_sink_x_1, 0))
         self.connect((self.blocks_repeat_0_0, 0), (self.qtgui_time_sink_x_1_0, 0))
+=======
+        self.connect((self.blocks_conjugate_cc_0, 0), (self.blocks_multiply_xx_0, 0))
+        self.connect((self.blocks_conjugate_cc_0_0, 0), (self.blocks_multiply_xx_1, 0))
+        self.connect((self.blocks_delay_0, 0), (self.blocks_multiply_xx_1, 1))
+        self.connect((self.blocks_integrate_xx_0, 0), (self.blocks_complex_to_mag_0_0, 0))
+        self.connect((self.blocks_integrate_xx_0_0, 0), (self.blocks_multiply_const_vxx_1, 0))
+        self.connect((self.blocks_multiply_const_vxx_0, 0), (self.audio_sink_0_0, 0))
+        self.connect((self.blocks_multiply_const_vxx_0, 0), (self.epy_block_0_0, 0))
+        self.connect((self.blocks_multiply_const_vxx_1, 0), (self.blocks_complex_to_mag_0, 0))
+        self.connect((self.blocks_multiply_xx_0, 0), (self.blocks_integrate_xx_0_0, 0))
+        self.connect((self.blocks_multiply_xx_1, 0), (self.blocks_integrate_xx_0, 0))
+        self.connect((self.blocks_multiply_xx_2, 0), (self.blocks_multiply_const_vxx_0, 0))
+        self.connect((self.blocks_repeat_0, 0), (self.blocks_multiply_xx_2, 1))
+        self.connect((self.blocks_repeat_0, 0), (self.epy_block_0_0, 1))
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
         self.connect((self.blocks_sub_xx_0, 0), (self.digital_binary_slicer_fb_0, 0))
         self.connect((self.digital_binary_slicer_fb_0, 0), (self.blocks_char_to_float_0, 0))
         self.connect((self.digital_costas_loop_cc_0, 0), (self.analog_agc_xx_0, 0))
         self.connect((self.digital_costas_loop_cc_0, 0), (self.analog_nbfm_rx_0, 0))
+<<<<<<< HEAD
         self.connect((self.digital_costas_loop_cc_0, 0), (self.blocks_conjugate_cc_0_1, 0))
         self.connect((self.digital_costas_loop_cc_0, 0), (self.blocks_multiply_xx_0_0, 1))
+=======
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
         self.connect((self.iio_pluto_source_0, 0), (self.digital_costas_loop_cc_0, 0))
 
 
@@ -412,9 +462,13 @@ class ece_1896_nichols_voice_detection(gr.top_block, Qt.QWidget):
 
     def set_int_length(self, int_length):
         self.int_length = int_length
+<<<<<<< HEAD
         self.blocks_multiply_const_vxx_2.set_k((1/self.int_length*self.RF_samp_rate/self.int_length))
         self.blocks_repeat_0.set_interpolation((int(self.int_length*self.audio_samp_rate/self.RF_samp_rate)))
         self.blocks_repeat_0_0.set_interpolation((int(self.int_length*self.audio_samp_rate/self.RF_samp_rate)))
+=======
+        self.blocks_repeat_0.set_interpolation((int(self.int_length*self.audio_samp_rate/self.RF_samp_rate)))
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
 
     def get_carrier_freq(self):
         return self.carrier_freq
@@ -429,10 +483,13 @@ class ece_1896_nichols_voice_detection(gr.top_block, Qt.QWidget):
     def set_audio_samp_rate(self, audio_samp_rate):
         self.audio_samp_rate = audio_samp_rate
         self.blocks_repeat_0.set_interpolation((int(self.int_length*self.audio_samp_rate/self.RF_samp_rate)))
+<<<<<<< HEAD
         self.blocks_repeat_0_0.set_interpolation((int(self.int_length*self.audio_samp_rate/self.RF_samp_rate)))
         self.qtgui_time_sink_x_1.set_samp_rate(self.audio_samp_rate)
         self.qtgui_time_sink_x_1_0.set_samp_rate(self.audio_samp_rate)
         self.qtgui_time_sink_x_2.set_samp_rate(self.audio_samp_rate)
+=======
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
 
     def get_audio_gain(self):
         return self.audio_gain
@@ -446,11 +503,16 @@ class ece_1896_nichols_voice_detection(gr.top_block, Qt.QWidget):
 
     def set_RF_samp_rate(self, RF_samp_rate):
         self.RF_samp_rate = RF_samp_rate
+<<<<<<< HEAD
         self.blocks_multiply_const_vxx_2.set_k((1/self.int_length*self.RF_samp_rate/self.int_length))
         self.blocks_repeat_0.set_interpolation((int(self.int_length*self.audio_samp_rate/self.RF_samp_rate)))
         self.blocks_repeat_0_0.set_interpolation((int(self.int_length*self.audio_samp_rate/self.RF_samp_rate)))
         self.iio_pluto_source_0.set_samplerate(self.RF_samp_rate)
         self.qtgui_time_sink_x_0.set_samp_rate(self.RF_samp_rate)
+=======
+        self.blocks_repeat_0.set_interpolation((int(self.int_length*self.audio_samp_rate/self.RF_samp_rate)))
+        self.iio_pluto_source_0.set_samplerate(self.RF_samp_rate)
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
 
 
 

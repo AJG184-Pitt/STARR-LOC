@@ -49,18 +49,20 @@ void setup() {
   north();
 
   while(1){
-    // wait for user input
-    Serial.print("\nInput azimuth steps:\n");
+
     while(Serial.available() == 0){}
-    String user_input = Serial.readString();
-    float az_steps = user_input.toFloat();
+    String serial_input = Serial.readString();
+
+    // parse string to separate az/el angles
+    int space_pos = serial_input.indexOf(' ');
+    String az_target_str = serial_input.substring(0, space_pos);
+    String el_target_str = serial_input.substring(space_pos + 1);
+    float az_steps = az_target_str.toFloat();
+    float el_steps = el_target_str.toFloat();
+
     bool az_dir = az_steps < 0;
     uint16_t az_steps_abs = (uint16_t)round(abs(az_steps));
 
-    Serial.print("Input elevation steps:\n");
-    while(Serial.available() == 0){}
-    user_input = Serial.readString();
-    float el_steps = user_input.toFloat();
     bool el_dir = el_steps < 0;
     uint16_t el_steps_abs = (uint16_t)round(abs(el_steps));
 
@@ -119,11 +121,6 @@ void azel_step_control(bool az_dir, uint16_t az_steps, bool el_dir, uint16_t el_
   // handle stepping a certain number of steps
   uint16_t az_step_curr = az_steps;
   uint16_t el_step_curr = el_steps;
-  Serial.print("AZ: ");
-  Serial.print(az_step_curr);
-  Serial.print("\tEL: ");
-  Serial.print(el_step_curr);
-  Serial.print("\n");
   
   while ((az_step_curr > 0) & (el_step_curr > 0)){
     digitalWrite(az_step, HIGH);

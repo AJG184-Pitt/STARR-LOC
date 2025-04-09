@@ -9,9 +9,15 @@ options:
     description: ''
     gen_cmake: 'On'
     gen_linking: dynamic
+<<<<<<< HEAD
     generate_options: qt_gui
     hier_block_src_path: '.:'
     id: ece_1896_nichols_voice_detection
+=======
+    generate_options: no_gui
+    hier_block_src_path: '.:'
+    id: options
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
     max_nouts: '0'
     output_language: python
     placement: (0,0)
@@ -28,7 +34,11 @@ options:
     bus_sink: false
     bus_source: false
     bus_structure: null
+<<<<<<< HEAD
     coordinate: [8, 8]
+=======
+    coordinate: [8, 8.0]
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
     rotation: 0
     state: enabled
 
@@ -65,6 +75,21 @@ blocks:
     bus_structure: null
     coordinate: [808, 784.0]
     rotation: 0
+<<<<<<< HEAD
+=======
+    state: disabled
+- name: audio_gain
+  id: variable
+  parameters:
+    comment: ''
+    value: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [808, 712.0]
+    rotation: 0
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
     state: enabled
 - name: audio_samp_rate
   id: variable
@@ -135,7 +160,11 @@ blocks:
     start: '10'
     step: '1'
     stop: '64'
+<<<<<<< HEAD
     value: '64'
+=======
+    value: '30'
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
     widget: counter_slider
   states:
     bus_sink: false
@@ -143,6 +172,21 @@ blocks:
     bus_structure: null
     coordinate: [200, 224.0]
     rotation: 0
+<<<<<<< HEAD
+=======
+    state: disabled
+- name: rf_gain
+  id: variable
+  parameters:
+    comment: ''
+    value: '30'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [200, 152.0]
+    rotation: 0
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
     state: enabled
 - name: thresh
   id: variable_qtgui_range
@@ -164,6 +208,21 @@ blocks:
     bus_structure: null
     coordinate: [928, 440.0]
     rotation: 0
+<<<<<<< HEAD
+=======
+    state: disabled
+- name: thresh
+  id: variable
+  parameters:
+    comment: ''
+    value: '.5'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [928, 560.0]
+    rotation: 0
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
     state: enabled
 - name: analog_agc_xx_0
   id: analog_agc_xx
@@ -285,7 +344,11 @@ blocks:
     bus_structure: null
     coordinate: [760, 1224.0]
     rotation: 0
+<<<<<<< HEAD
     state: enabled
+=======
+    state: disabled
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
 - name: blocks_conjugate_cc_0
   id: blocks_conjugate_cc
   parameters:
@@ -330,7 +393,11 @@ blocks:
     bus_structure: null
     coordinate: [272, 1208.0]
     rotation: 0
+<<<<<<< HEAD
     state: enabled
+=======
+    state: disabled
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
 - name: blocks_delay_0
   id: blocks_delay
   parameters:
@@ -404,7 +471,11 @@ blocks:
     bus_structure: null
     coordinate: [600, 1216.0]
     rotation: 0
+<<<<<<< HEAD
     state: enabled
+=======
+    state: disabled
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
 - name: blocks_multiply_const_vxx_0
   id: blocks_multiply_const_vxx
   parameters:
@@ -458,7 +529,11 @@ blocks:
     bus_structure: null
     coordinate: [936, 1216.0]
     rotation: 0
+<<<<<<< HEAD
     state: enabled
+=======
+    state: disabled
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
 - name: blocks_multiply_xx_0
   id: blocks_multiply_xx
   parameters:
@@ -494,7 +569,11 @@ blocks:
     bus_structure: null
     coordinate: [472, 1208.0]
     rotation: 0
+<<<<<<< HEAD
     state: enabled
+=======
+    state: disabled
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
 - name: blocks_multiply_xx_1
   id: blocks_multiply_xx
   parameters:
@@ -548,7 +627,11 @@ blocks:
     bus_structure: null
     coordinate: [1112, 1216.0]
     rotation: 0
+<<<<<<< HEAD
     state: enabled
+=======
+    state: disabled
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
 - name: blocks_repeat_0
   id: blocks_repeat
   parameters:
@@ -584,7 +667,11 @@ blocks:
     bus_structure: null
     coordinate: [1248, 1216.0]
     rotation: 0
+<<<<<<< HEAD
     state: enabled
+=======
+    state: disabled
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
 - name: blocks_sub_xx_0
   id: blocks_sub_xx
   parameters:
@@ -633,7 +720,11 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
+<<<<<<< HEAD
     coordinate: [464, 168.0]
+=======
+    coordinate: [464, 160.0]
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
     rotation: 0
     state: enabled
 - name: epy_block_0_0
@@ -708,7 +799,11 @@ blocks:
     rfdc: 'True'
     samplerate: RF_samp_rate
     type: fc32
+<<<<<<< HEAD
     uri: ip:192.168.2.4
+=======
+    uri: ip:192.168.2.20
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
   states:
     bus_sink: false
     bus_source: false
@@ -738,7 +833,11 @@ blocks:
     bus_structure: null
     coordinate: [456, 672.0]
     rotation: 0
+<<<<<<< HEAD
     state: enabled
+=======
+    state: disabled
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
 - name: qtgui_time_sink_x_0
   id: qtgui_time_sink_x
   parameters:
@@ -835,7 +934,11 @@ blocks:
     bus_structure: null
     coordinate: [456, 568.0]
     rotation: 0
+<<<<<<< HEAD
     state: enabled
+=======
+    state: disabled
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
 - name: qtgui_time_sink_x_1
   id: qtgui_time_sink_x
   parameters:
@@ -932,7 +1035,11 @@ blocks:
     bus_structure: null
     coordinate: [688, 1072.0]
     rotation: 0
+<<<<<<< HEAD
     state: enabled
+=======
+    state: disabled
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
 - name: qtgui_time_sink_x_1_0
   id: qtgui_time_sink_x
   parameters:
@@ -1029,7 +1136,11 @@ blocks:
     bus_structure: null
     coordinate: [1432, 1192.0]
     rotation: 0
+<<<<<<< HEAD
     state: enabled
+=======
+    state: disabled
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
 - name: qtgui_time_sink_x_2
   id: qtgui_time_sink_x
   parameters:
@@ -1126,7 +1237,11 @@ blocks:
     bus_structure: null
     coordinate: [1008, 808.0]
     rotation: 0
+<<<<<<< HEAD
     state: enabled
+=======
+    state: disabled
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
 - name: virtual_sink_0
   id: virtual_sink
   parameters:
@@ -1150,7 +1265,11 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
+<<<<<<< HEAD
     coordinate: [720, 160.0]
+=======
+    coordinate: [712, 152.0]
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
     rotation: 0
     state: enabled
 - name: virtual_source_0
@@ -1204,7 +1323,11 @@ blocks:
     bus_structure: null
     coordinate: [16, 1232.0]
     rotation: 0
+<<<<<<< HEAD
     state: enabled
+=======
+    state: disabled
+>>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
 
 connections:
 - [analog_agc_xx_0, '0', blocks_conjugate_cc_0, '0']
