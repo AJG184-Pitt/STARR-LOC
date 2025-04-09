@@ -1,18 +1,13 @@
-from PyQt6.QtGui import QFont, QPixmap, QKeyEvent, QColor, QPainter
+from PyQt6.QtGui import QPixmap, QKeyEvent
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QComboBox,
-                            QLineEdit, QLabel, QGridLayout, QWidget, QVBoxLayout, QStyledItemDelegate)
-from PyQt6.QtCore import QSize, Qt, pyqtSignal, QEvent, QTimer, pyqtSignal
+                            QLineEdit, QLabel, QGridLayout, QWidget)
+from PyQt6.QtCore import Qt, pyqtSignal, QEvent, QTimer
 
 import sys
 import os
 import serial
-import signal
 from time import sleep
-import functools
-
-ser = serial.Serial("/dev/ttyUSB0", 115200, rtscts=False, dsrdtr=False)
-ser.rts = False
-ser.dtr = False
+import time
 
 # Add the relative path (this might work in some cases)
 sys.path.append('../sgp4')
@@ -28,7 +23,128 @@ import pytz, datetime
 
 import subprocess
 import multiprocessing
+
+import RPi.GPIO as GPIO
+
+class GpioSetup():
+    def __init__(self):
+        # Pin numbers on Raspberry Pi
+        # First encoder
+        self.CLK_PIN = 25   # GPIO7 connected to the rotary encoder's CLK pin
+        self.DT_PIN = 8     # GPIO8 connected to the rotary encoder's DT pin
+        self.SW_PIN = 7     # GPIO25 connected to the rotary encoder's SW pin
+
+        # Second encoder
+        self.CLK_PIN_2 = 14
+        self.DT_PIN_2 = 15
+        self.SW_PIN_2 = 18
+
+        self.DIRECTION_CW = 0
+        self.DIRECTION_CCW = 1
+
+        # First encoder state
+        self.counter = 0
+        self.direction = self.DIRECTION_CW
+        self.CLK_state = 0
+        self.prev_CLK_state = 0
+        self.button_pressed = False
+        self.prev_button_state = GPIO.HIGH
+
+        # Second encoder state
+        self.counter_2 = 0
+        self.direction_2 = self.DIRECTION_CW
+        self.CLK_state_2 = 0
+        self.prev_CLK_state_2 = 0
+        self.button_pressed_2 = False
+        self.prev_button_state_2 = GPIO.HIGH
+
+        # Configure GPIO pins
+        GPIO.setmode(GPIO.BCM)
+        
+        # First encoder setup
+        GPIO.setup(self.CLK_PIN, GPIO.IN)
+        GPIO.setup(self.DT_PIN, GPIO.IN)
+        GPIO.setup(self.SW_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        
+        # Second encoder setup
+        GPIO.setup(self.CLK_PIN_2, GPIO.IN)
+        GPIO.setup(self.DT_PIN_2, GPIO.IN)
+        GPIO.setup(self.SW_PIN_2, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+        # Read the initial state of both rotary encoders' CLK pins
+        self.prev_CLK_state = GPIO.input(self.CLK_PIN)
+        self.prev_CLK_state_2 = GPIO.input(self.CLK_PIN_2)
+
+    def read_encoder(self):
+        # Read the current state of the first rotary encoder's CLK pin
+        CLK_state = GPIO.input(self.CLK_PIN)
+
+        pulse_difference = 0
+
+        # If the state of CLK is changed, then pulse occurred
+        # React to only the rising edge (from LOW to HIGH) to avoid double count
+        if CLK_state != self.prev_CLK_state and CLK_state == GPIO.LOW:
+            # If the DT state is HIGH, the encoder is rotating in counter-clockwise direction
+            if GPIO.input(self.DT_PIN) == GPIO.HIGH:
+                pulse_difference = -1
+                self.direction = self.DIRECTION_CCW
+            else:
+                # The encoder is rotating in clockwise direction
+                pulse_difference = 1
+                self.direction = self.DIRECTION_CW
+
+        # Save last CLK state
+        self.prev_CLK_state = CLK_state
+        return pulse_difference
     
+    def read_encoder_2(self):
+        # Read the current state of the second rotary encoder's CLK pin
+        CLK_state_2 = GPIO.input(self.CLK_PIN_2)
+
+        pulse_difference = 0
+
+        # If the state of CLK is changed, then pulse occurred
+        # React to only the rising edge (from LOW to HIGH) to avoid double count
+        if CLK_state_2 != self.prev_CLK_state_2 and CLK_state_2 == GPIO.LOW:
+            # If the DT state is HIGH, the encoder is rotating in counter-clockwise direction
+            if GPIO.input(self.DT_PIN_2) == GPIO.HIGH:
+                pulse_difference = -1
+                self.direction_2 = self.DIRECTION_CCW
+            else:
+                # The encoder is rotating in clockwise direction
+                pulse_difference = 1
+                self.direction_2 = self.DIRECTION_CW
+
+        # Save last CLK state
+        self.prev_CLK_state_2 = CLK_state_2
+        return pulse_difference
+        
+    def read_button(self):
+        # State change detection for the first button
+        button_state = GPIO.input(self.SW_PIN)
+        if button_state != self.prev_button_state:
+            time.sleep(0.1)  # Add a small delay to debounce
+            if button_state == GPIO.LOW:
+                self.button_pressed = True
+            else:
+                self.button_pressed = False
+
+        self.prev_button_state = button_state
+        return self.button_pressed
+    
+    def read_button_2(self):
+        # State change detection for the second button
+        button_state_2 = GPIO.input(self.SW_PIN_2)
+        if button_state_2 != self.prev_button_state_2:
+            time.sleep(0.1)  # Add a small delay to debounce
+            if button_state_2 == GPIO.LOW:
+                self.button_pressed_2 = True
+            else:
+                self.button_pressed_2 = False
+
+        self.prev_button_state_2 = button_state_2
+        return self.button_pressed_2
+  
 
 class CustomComboBox(QComboBox):
     """
@@ -85,10 +201,12 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        
-        self.showFullScreen()
 
-        self.fake_datetime = datetime.datetime(year=2025, month=4, day=2, hour=12, minute=10, second=0)
+        ser = serial.Serial("/dev/ttyUSB0", 115200, rtscts=False, dsrdtr=False)
+        ser.rts = False
+        ser.dtr = False
+
+        self.showFullScreen()
 
         # Information gathering
         self.tle_file_path = "../bluetooth/tle.data"
@@ -127,11 +245,7 @@ class MainWindow(QMainWindow):
         """)
         self.setCentralWidget(central_widget)
         grid = QGridLayout(central_widget)
-        
-        # Initialize flags
-        self.auto_flag = False
-        self.manual_flag = False
-        self.combo_selected = False
+    
         
         # Sort list based on distance
         self.satellites = sorted(self.satellites, key=lambda sat: sat.getAngleFrom(self.observer, local_time)[2])
@@ -239,20 +353,48 @@ class MainWindow(QMainWindow):
         # Install event filter on the window itself
         self.installEventFilter(self)
 
-        #self.serial = QtSerialPort.QtSerialPort('/dev/ttyUSB0', baudRate=115200)
+        # Initialize flags
+        self.auto_flag = False
+        self.manual_flag = False
+        self.combo_selected = False
+        self.bluetooth_selected = False
 
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.quick_data)
-        self.timer.start(5000)
+        # Initialize gpio class object
+        self.gpio = GpioSetup()
+        self.selected_labels = [0, 1, 2, 3]
+        self.current_index = 0
 
+        # Encoder checks
+        self.encoder_timer = QTimer(self)
+        self.encoder_timer.timeout.connect(self.update_current_index)
+        self.encoder_timer.start(50)  # Check every 50ms
 
-        #signal.signal(signal.SIGALRM, self.quick_data)
-        #signal.setitimer(signal.ITIMER_REAL, 5, 5)
+        # Encoder 2 checks
+        self.encoder_2_timer = QTimer(self)
+        self.encoder_2_timer.timeout.connect(self.update_second_encoder)
+        self.encoder_2_timer.start(50)
+
+        # Encoder button checks
+        self.button_action_pending = False  # Add this as a class variable
+        self.button2_action_pending = False  # Add this as a class variable
+        self.encoder_timer = QTimer(self)
+        self.encoder_timer.timeout.connect(self.update_button_1)  # Connect to new method
+        self.encoder_timer.start(50)  # Check every 50ms
+        
+        # Temp code for testing
+        self.step_amount = 0
+
+        # Automatic mode flag
+        self.auto_toggle_active = False
+
+        # Refresh data timer
+        self.data_timer = QTimer(self)
+        self.data_timer.timeout.connect(self.quick_data)
+        self.data_timer.start(5000)
 
         self.reread_data()
 
-
-        options = [f"{sat.name:20} | {sat.overhead:10} " for sat in self.satellites]
+        options = [f"{sat.name:20} | " if not sat.overhead else f"{sat.name:20} |     Overhead " for sat in self.satellites]
         self.combo_box.clear()
         self.combo_box.addItems(options)
 
@@ -264,9 +406,7 @@ class MainWindow(QMainWindow):
             if event.key() == Qt.Key.Key_B:
                 # Only process if in auto mode
                 if self.auto_flag:
-                    print("sending data: 1")
-                    print("sending data: 2")
-                    print("sending data: 3")
+                    print("Automatic Mode: On")
                     # Return True to indicate the event has been handled
                     return True
 
@@ -288,16 +428,11 @@ class MainWindow(QMainWindow):
                 self.auto_track_process.terminate()
                 pass
             elif event.key() == Qt.Key.Key_F7:
-                #self.fake_datetime += datetime.timedelta(seconds=60)
-                print("Starting Process")
+                #print("Starting Process")
                 self.auto_track_process = multiprocessing.Process(target=self.auto_tracking)
                 self.auto_track_process.start()
                 #self.auto_track.emit()
-
-                #if angle[1] > 0:
-                    #print("Sending motor command to esp32")
-                    #string = f"{angle[0]} {angle[1]}"
-                    #ser.write(string.encode())
+                pass
             elif event.key() == Qt.Key.Key_F8:
                 self.showFullScreen()
             elif event.key() == Qt.Key.Key_F9:
@@ -441,14 +576,154 @@ class MainWindow(QMainWindow):
             }
         """)
 
+    def setBluetoothIconSelected(self):
+        return 0
+
+    def manual_encoder_control(self):
+        """
+        Toggle-able serial control method that sends encoder values over serial.
+        This method will run until the button is pressed again to exit.
+        
+        Designed to be called directly when the button is pressed.
+        """
+        # Flags to track state
+        counter1 = 0
+        counter2 = 0
+        prev_1 = 0
+        prev_2 = 0
+            
+        # Run until button is pressed again
+        while self.serial_active:
+            # Read encoder 1
+            encoder1_change = self.gpio.read_encoder()
+            encoder2_change = self.gpio.read_encoder_2()
+                
+            if encoder1_change != 0:
+                # Send encoder 1 data when it changes
+                if encoder1_change == 1:
+                    counter1 += 1
+                elif encoder1_change == -1:
+                    counter1 -= 1
+                    
+                print(f"Encoder 1 w/ counter: {encoder1_change} {counter1}\n")
+                
+            elif encoder2_change != 0:
+                if encoder2_change == 1:
+                    counter2 += 1
+                elif encoder2_change == -1:
+                    counter2 -= 1
+                    
+                if counter2 <= 0:
+                    counter2 = 0
+                    
+                print(f"Encoder 2 w/ counter: {encoder2_change} {counter2}")
+                
+            print(f"{counter1} {counter2}\n")
+            if prev_1 != counter1 or prev_2 != counter2:
+                send_data = f"{counter1} {counter2}\n"
+                self.ser.write(send_data.encode())
+
+                prev_1 = counter1
+                prev_2 = counter2
+                
+                # if encoder2_change != 0:
+                #     # Send encoder 2 data when it changes
+                #     print(f"Sending encoder 2: {encoder2_change}")
+                #     ser.write(f"E2:{encoder2_change}\n".encode())
+                
+                # Check if button is pressed to exit the loop
+                if self.gpio.read_button() == True:
+                    time.sleep(0.1)  # Debounce
+                    print("Button pressed, exiting serial control")
+                    break
+                
+                time.sleep(0.01)  # Small delay to prevent CPU hogging
+
+    def update_current_index(self):
+        previous_index = self.current_index
+        # Update current index based on encoder value
+        self.encode = self.gpio.read_encoder()
+        if self.encode == 1:
+            self.current_index = (self.current_index + 1) % len(self.selected_labels)
+        elif self.encode == -1:
+            self.current_index = (self.current_index - 1) % len(self.selected_labels)
+        
+        # Update UI if index changed
+        if previous_index != self.current_index:
+            self.update_selection()
+
+    def update_second_encoder(self):
+        if self.combo_selected:
+            encoder2_value = self.gpio.read_encoder_2()
+            if encoder2_value == 1:
+                key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Down, Qt.KeyboardModifier.NoModifier)
+                QApplication.sendEvent(self.combo_box, key_event)
+            elif encoder2_value == -1:
+                key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Up, Qt.KeyboardModifier.NoModifier)
+                QApplication.sendEvent(self.combo_box, key_event)
+
+            if self.gpio.read_button_2() and not self.button2_action_pending:
+                key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_F4, Qt.KeyboardModifier.NoModifier)
+                QApplication.sendEvent(self.combo_box, key_event)
+                self.button2_action_pending = True
+            elif not self.gpio.read_button_2():
+                self.button2_action_pending = False
+
+    def update_selection(self):
+        # Update UI based on current_index
+        if self.current_index == 0:
+            self.auto_flag = True
+            self.combo_selected = False
+            self.manual_flag = False
+            self.bluetooth_selected = False
+            self.setAutoIconSelected()
+        elif self.current_index == 1:
+            self.auto_flag = False
+            self.combo_selected = True
+            self.manual_flag = False
+            self.bluetooth_selected = False
+            self.setDropdownSelected()
+        elif self.current_index == 2:
+            self.auto_flaπ = False
+            self.combo_selected = False
+            self.manual_flag = True
+            self.bluetooth_selected = False
+            self.setManualIconSelected()
+        elif self.current_index == 3:
+            self.auto_flag = False
+            self.combo_box = False
+            self.manual_flag = False
+        self.bluetooth_selected = True
+        self.setBluetoothIconSelected()
+
+    def update_button_1(self):
+        # First update encoder position
+        self.update_current_index()
+        
+        # Then check button state
+        if self.gpio.read_button():
+            # Button is pressed, handle based on current mode
+            if self.auto_flag:
+                if not self.button_action_pending:
+                    self.auto_toggle_active = not self.auto_toggle_active
+                    print(f"Auto toggle Mode: {'Active' if self.auto_toggle_active else 'Inactive'}")
+            elif self.manual_flag:
+                if self.button_action_pending == False:  # Prevent repeated actions
+                    print("Manual mode pending integration")
+                    self.manual_encoder_control()
+                    self.button_action_pending = True
+        else:
+            # Button is released
+            self.button_action_pending = False
+
     def sat_data(self, satellites, selected, observer, local_time):
         print("sat data")
         # Get data from the satellite object
         
-        e1_data = satellites[selected].getAngleFrom(observer, local_time)
+        e2_data = satellites[selected].getAngleFrom(observer, local_time)
         
-        e2_data = satellites[selected].nextOverhead(observer, local_time)
-        e3_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e2_data)
+        e3_data = satellites[selected].nextOverhead(observer, local_time)
+        e4_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e2_data)
         
         # e4_data = satellites[selected].getAngleFrom(observer, local_time)
 
@@ -457,15 +732,15 @@ class MainWindow(QMainWindow):
         
         # String formatting for displaying results
         #e1_data = "AZ: " + str(e1_data[0]) + " , " + "EL: " + str(e1_data[1])
-        e1_data = f"Azimuth: {e1_data[0]:.2f}, Elevation: {e1_data[1]:.2f}"
-        e2_data = e2_data.astimezone(pytz.timezone('US/Eastern')).strftime("%Y-%m-%d %H:%M:%S")
+        e2_data = f"Azimuth: {e2_data[0]:.2f}, Elevation: {e2_data[1]:.2f}"
+        e3_data = e3_data.astimezone(pytz.timezone('US/Eastern')).strftime("%Y-%m-%d %H:%M:%S")
         #e3_data = str(e3_data)
-        e3_data = f"Minutes : {e3_data[0]}, Seconds: {e3_data[1]}"
-        e4_data = str("-1")
+        e4_data = f"Minutes : {e4_data[0]}, Seconds: {e4_data[1]}"
+        #e4_data = str("-1")
         # e5_data = str(e5_data)
         
         # Pass satellite data into text boxes
-        self.e1.setText(e1_data)
+        self.e1.setText("Satellite")
         self.e2.setText(e2_data)
         self.e3.setText(e3_data)
         self.e4.setText(e4_data)
@@ -489,7 +764,6 @@ class MainWindow(QMainWindow):
     def quick_data(self):
         print("quick data")
         time = datetime.datetime.now(pytz.timezone("US/Eastern"))
-        #time = datetime.datetime.now()
         utc_time = time.astimezone(pytz.utc)
         self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, utc_time)
 
@@ -527,19 +801,16 @@ class MainWindow(QMainWindow):
                 # Get the current time
                 current_time = datetime.datetime.now(pytz.timezone("US/Eastern"))
                 current_time = current_time.astimezone(pytz.utc)
-                #current_time += datetime.timedelta(seconds=5)
 
                 # Get the satellite position and angle
                 angle = satellite.getAngleFrom(self.observer, current_time)
                 # Check if the satellite is overhead
-                #if satellite.isOverhead(self.observer, current_time):
                 if angle[1] > 0: 
                     print(f"Satellite {satellite.name} is overhead at {current_time}", file=file)
                     print(f"{angle[0]=} & {angle[1]=}", file=file)
                     # Send motor command to ESP32
                     string = f"{angle[0]:.4f} {angle[1]:.4f} 0"
-                    ser.write(string.encode())
-                    #self.serial.write(string.encode())
+                    self.ser.write(string.encode())
                 else:
                     print(f"Satellite {satellite.name} is not overhead at {current_time}", file=file)
                     break
