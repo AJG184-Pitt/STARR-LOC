@@ -9,9 +9,9 @@ options:
     description: ''
     gen_cmake: 'On'
     gen_linking: dynamic
-    generate_options: qt_gui
+    generate_options: no_gui
     hier_block_src_path: '.:'
-    id: ece_1896_nichols_voice_detection
+    id: options
     max_nouts: '0'
     output_language: python
     placement: (0,0)
@@ -28,7 +28,7 @@ options:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [8, 8]
+    coordinate: [8, 8.0]
     rotation: 0
     state: enabled
 
@@ -64,6 +64,18 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [808, 784.0]
+    rotation: 0
+    state: disabled
+- name: audio_gain
+  id: variable
+  parameters:
+    comment: ''
+    value: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [808, 712.0]
     rotation: 0
     state: enabled
 - name: audio_samp_rate
@@ -135,13 +147,25 @@ blocks:
     start: '10'
     step: '1'
     stop: '64'
-    value: '64'
+    value: '30'
     widget: counter_slider
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
     coordinate: [200, 224.0]
+    rotation: 0
+    state: disabled
+- name: rf_gain
+  id: variable
+  parameters:
+    comment: ''
+    value: '30'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [200, 152.0]
     rotation: 0
     state: enabled
 - name: thresh
@@ -163,6 +187,18 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [928, 440.0]
+    rotation: 0
+    state: disabled
+- name: thresh
+  id: variable
+  parameters:
+    comment: ''
+    value: '.5'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [928, 560.0]
     rotation: 0
     state: enabled
 - name: analog_agc_xx_0
@@ -285,7 +321,7 @@ blocks:
     bus_structure: null
     coordinate: [760, 1224.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_conjugate_cc_0
   id: blocks_conjugate_cc
   parameters:
@@ -330,7 +366,7 @@ blocks:
     bus_structure: null
     coordinate: [272, 1208.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_delay_0
   id: blocks_delay
   parameters:
@@ -404,7 +440,7 @@ blocks:
     bus_structure: null
     coordinate: [600, 1216.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_multiply_const_vxx_0
   id: blocks_multiply_const_vxx
   parameters:
@@ -458,7 +494,7 @@ blocks:
     bus_structure: null
     coordinate: [936, 1216.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_multiply_xx_0
   id: blocks_multiply_xx
   parameters:
@@ -494,7 +530,7 @@ blocks:
     bus_structure: null
     coordinate: [472, 1208.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_multiply_xx_1
   id: blocks_multiply_xx
   parameters:
@@ -548,7 +584,7 @@ blocks:
     bus_structure: null
     coordinate: [1112, 1216.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_repeat_0
   id: blocks_repeat
   parameters:
@@ -584,7 +620,7 @@ blocks:
     bus_structure: null
     coordinate: [1248, 1216.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: blocks_sub_xx_0
   id: blocks_sub_xx
   parameters:
@@ -633,7 +669,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [464, 168.0]
+    coordinate: [464, 160.0]
     rotation: 0
     state: enabled
 - name: epy_block_0_0
@@ -708,7 +744,7 @@ blocks:
     rfdc: 'True'
     samplerate: RF_samp_rate
     type: fc32
-    uri: ip:192.168.2.4
+    uri: ip:192.168.2.20
   states:
     bus_sink: false
     bus_source: false
@@ -738,7 +774,7 @@ blocks:
     bus_structure: null
     coordinate: [456, 672.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: qtgui_time_sink_x_0
   id: qtgui_time_sink_x
   parameters:
@@ -835,7 +871,7 @@ blocks:
     bus_structure: null
     coordinate: [456, 568.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: qtgui_time_sink_x_1
   id: qtgui_time_sink_x
   parameters:
@@ -932,7 +968,7 @@ blocks:
     bus_structure: null
     coordinate: [688, 1072.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: qtgui_time_sink_x_1_0
   id: qtgui_time_sink_x
   parameters:
@@ -1029,7 +1065,7 @@ blocks:
     bus_structure: null
     coordinate: [1432, 1192.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: qtgui_time_sink_x_2
   id: qtgui_time_sink_x
   parameters:
@@ -1126,7 +1162,7 @@ blocks:
     bus_structure: null
     coordinate: [1008, 808.0]
     rotation: 0
-    state: enabled
+    state: disabled
 - name: virtual_sink_0
   id: virtual_sink
   parameters:
@@ -1150,7 +1186,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [720, 160.0]
+    coordinate: [712, 152.0]
     rotation: 0
     state: enabled
 - name: virtual_source_0
@@ -1204,7 +1240,7 @@ blocks:
     bus_structure: null
     coordinate: [16, 1232.0]
     rotation: 0
-    state: enabled
+    state: disabled
 
 connections:
 - [analog_agc_xx_0, '0', blocks_conjugate_cc_0, '0']
