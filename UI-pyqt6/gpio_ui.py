@@ -446,26 +446,49 @@ class MainWindow(QMainWindow):
         print("Starting serial control")
         try:
             # Open serial connection
-            ser = Serial('/dev/ttyACM0', 115200, timeout=1)
+            ser = Serial('/dev/ttyUSB0', 115200, timeout=1)
             time.sleep(0.5)  # Give serial connection time to initialize
             
             print("Serial connection established")
+
+            counter1 = 0
+            counter2 = 0
+            prev_1 = 0
+            prev_2 = 0
             
             # Run until button is pressed again
             while self.serial_active:
                 # Read encoder 1
                 encoder1_change = self.gpio.read_encoder()
+                encoder2_change = self.gpio.read_encoder_2()
+                
                 if encoder1_change != 0:
                     # Send encoder 1 data when it changes
-                    print(f"Sending encoder 1: {encoder1_change}")
-                    ser.write(f"E1:{encoder1_change}\n".encode())
+                    if encoder1_change == 1:
+                        counter1 += 1
+                    elif encoder1_change == -1:
+                        counter1 -= 1
+                    print(f"Encoder 1 w/ counter: {encoder1_change} {counter1}\n")
                 
-                # Read encoder 2
-                encoder2_change = self.gpio.read_encoder_2()
-                if encoder2_change != 0:
-                    # Send encoder 2 data when it changes
-                    print(f"Sending encoder 2: {encoder2_change}")
-                    ser.write(f"E2:{encoder2_change}\n".encode())
+                elif encoder2_change != 0:
+                    if encoder2_change == 1:
+                        counter2 += 1
+                    elif encoder2_change == -1:
+                        counter2 -= 1
+                    print(f"Encoder 2 w/ counter: {encoder2_change} {counter2}")
+                
+                print(f"{counter1} {counter2}\n")
+                time.sleep(1)
+                if prev_1 != counter1 and prev_2 != counter2:
+                    ser.write(f"{counter1} {counter2}\n".encode())
+
+                prev_1 = counter1
+                prev_2 = counter2
+                
+                # if encoder2_change != 0:
+                #     # Send encoder 2 data when it changes
+                #     print(f"Sending encoder 2: {encoder2_change}")
+                #     ser.write(f"E2:{encoder2_change}\n".encode())
                 
                 # Check if button is pressed to exit the loop
                 if self.gpio.read_button():
