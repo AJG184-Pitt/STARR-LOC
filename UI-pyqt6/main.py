@@ -202,6 +202,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
+
         self.ser = serial.Serial("/dev/ttyUSB0", 115200, rtscts=False, dsrdtr=False)
         self.ser.rts = False
         self.ser.dtr = False
@@ -223,7 +224,7 @@ class MainWindow(QMainWindow):
 
         self.process = None
         self.process_running = False
-        self.auto_track_process = multiprocessing.Process
+        self.tracked_satellite = None
 
         et = pytz.timezone("US/Eastern")
         local_time = datetime.datetime.now(et)
@@ -234,17 +235,17 @@ class MainWindow(QMainWindow):
         self.setFixedSize(800, 480)
 
         # Create central widget and layout
-        central_widget = QWidget()
+        self.central_widget = QWidget()
         background_image = "Assets/star_background"
-        central_widget.setStyleSheet(f"""
+        self.central_widget.setStyleSheet(f"""
             QWidget {{
                 background-image: url({background_image});            
                 background-repeat: no-repeat;
                 background-position: center;
             }}
         """)
-        self.setCentralWidget(central_widget)
-        grid = QGridLayout(central_widget)
+        self.setCentralWidget(self.central_widget)
+        grid = QGridLayout(self.central_widget)
     
         
         # Sort list based on distance
@@ -271,19 +272,19 @@ class MainWindow(QMainWindow):
         self.e6 = QLineEdit()
 
         # Create interactable icons
-        self.auto_image = QLabel(central_widget)
+        self.auto_image = QLabel(self.central_widget)
         self.auto_image.setGeometry(10, 400, 64, 64)
         pixmap1 = QPixmap('Assets/auto.png')
         pixmap1 = pixmap1.scaled(64, 64)
         self.auto_image.setPixmap(pixmap1)
 
-        self.manual_image = QLabel(central_widget)
+        self.manual_image = QLabel(self.central_widget)
         self.manual_image.setGeometry(100, 400, 64, 64)
         pixmap2 = QPixmap('Assets/manual.png')
         pixmap2 = pixmap2.scaled(64, 64)
         self.manual_image.setPixmap(pixmap2)
 
-        self.bluetooth_image = QLabel(central_widget)
+        self.bluetooth_image = QLabel(self.central_widget)
         self.bluetooth_image.setGeometry(190, 400, 48, 64)
         pixmap3 = QPixmap('Assets/bluetooth.png')
         pixmap3 = pixmap3.scaled(48, 64)
@@ -427,10 +428,12 @@ class MainWindow(QMainWindow):
             elif event.key() == Qt.Key.Key_F5:
                 self.startBluetoothServer()
             elif event.key() == Qt.Key.Key_F6:
+                self.tracked_satellite = None
                 self.auto_track_process.terminate()
-                pass
+                self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
             elif event.key() == Qt.Key.Key_F7:
                 #print("Starting Process")
+                self.tracked_satellite = self.satellites[self.combo_box.currentIndex()]
                 self.auto_track_process = multiprocessing.Process(target=self.auto_tracking)
                 self.auto_track_process.start()
                 #self.auto_track.emit()
@@ -669,15 +672,18 @@ class MainWindow(QMainWindow):
                 key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Up, Qt.KeyboardModifier.NoModifier)
                 QApplication.sendEvent(self.combo_box, key_event)
 
-            if self.gpio.read_button_2(): # and not self.button2_action_pending:
-                if self.expanded_list == False:
-                    key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_F4, Qt.KeyboardModifier.NoModifier)
-                QApplication.sendEvent(self.combo_box, key_event)
-                self.button2_action_pending = True
-            elif not self.gpio.read_button_2():
-                self.button2_action_pending = False
-        elif self.expanded_list:
-            key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_F4, Qt.KeyboardModifier.NoModifier)
+        if self.gpio.read_button_2(): # and not self.button2_action_pending:
+            if not self.expanded_list:
+                self.combo_box.showPopup()
+                self.expanded_list = True
+                sleep(0.3)
+            else:
+                self.combo_box.hidePopup()
+                self.expanded_list = False
+                sleep(0.3)
+
+            print("Button 2 pressed")
+
 
     def update_selection(self):
         # Update UI based on current_index
@@ -714,17 +720,21 @@ class MainWindow(QMainWindow):
         if self.gpio.read_button():
             # Button is pressed, handle based on current mode
             if self.auto_flag:
-                if self.button_action_pending == False:
+                if self.button_action_pending == False and self.tracked_satellite is None:
                     print(f"Auto Mode Integration")
+                    self.tracked_satellite = self.satellites[self.combo_box.currentIndex()]
+
                     self.auto_track_process = multiprocessing.Process(target=self.auto_tracking)
                     self.auto_track_process.start()
                     self.button_action_pending = True
+                    sleep(1)
 
-                    time.sleep(5)
 
-                    if self.gpio.read_button() == True:
-                        self.button_action_process.terminate()
-
+                elif self.button_action_pending == False and self.auto_track_process.is_alive(): 
+                    print("Auto mode Terminate")
+                    self.tracked_satellite = None
+                    self.auto_track_process.terminate()
+                    sleep(1)
 
 
             elif self.manual_flag:
@@ -737,30 +747,29 @@ class MainWindow(QMainWindow):
             self.button_action_pending = False
 
     def sat_data(self, satellites, selected, observer, local_time):
-        print("sat data")
-        # Get data from the satellite object
-        
-        e2_data = satellites[selected].getAngleFrom(observer, local_time)
-        
-        e3_data = satellites[selected].nextOverhead(observer, local_time)
-        e4_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e3_data)
-        
-        # e4_data = satellites[selected].getAngleFrom(observer, local_time)
 
-        #e5_data = str(observer.lat) + " , " + str(observer.lon) + " , " + str(observer.alt)
-        e5_data = f"Lat: {observer.lat:.2f}, Lon: {observer.lon:.2f}, Alt: {observer.alt:.2f}"
-        
-        # String formatting for displaying results
-        #e1_data = "AZ: " + str(e1_data[0]) + " , " + "EL: " + str(e1_data[1])
+        if self.tracked_satellite is not None:
+            index = self.satellites.index(self.tracked_satellite)
+            e1_data = satellites[index].name
+            e2_data = satellites[index].getAngleFrom(observer, local_time)
+            e3_data = satellites[index].nextOverhead(observer, local_time)
+            e4_data = satellites[index].overheadDuration(observer, local_time, next_overhead=e3_data)
+
+        else:
+            e1_data = satellites[selected].name
+            e2_data = satellites[selected].getAngleFrom(observer, local_time)
+            e3_data = satellites[selected].nextOverhead(observer, local_time)
+            e4_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e3_data)
+
+
+
         e2_data = f"Azimuth: {e2_data[0]:.2f}, Elevation: {e2_data[1]:.2f}"
         e3_data = e3_data.astimezone(pytz.timezone('US/Eastern')).strftime("%Y-%m-%d %H:%M:%S")
-        #e3_data = str(e3_data)
         e4_data = f"Minutes : {e4_data[0]}, Seconds: {e4_data[1]}"
-        #e4_data = str("-1")
-        # e5_data = str(e5_data)
+        e5_data = f"Lat: {observer.lat:.2f}, Lon: {observer.lon:.2f}, Alt: {observer.alt:.2f}"
         
         # Pass satellite data into text boxes
-        self.e1.setText("Satellite")
+        self.e1.setText(e1_data)
         self.e2.setText(e2_data)
         self.e3.setText(e3_data)
         self.e4.setText(e4_data)
@@ -783,12 +792,19 @@ class MainWindow(QMainWindow):
 
     def quick_data(self):
         print("quick data")
+        
         time = datetime.datetime.now(pytz.timezone("US/Eastern"))
         utc_time = time.astimezone(pytz.utc)
         #self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, utc_time)
 
-        selected = self.combo_box.currentIndex()
-        e2_data = self.satellites[selected].getAngleFrom(self.observer, utc_time)
+        if self.tracked_satellite is not None:
+            index = self.satellites.index(self.tracked_satellite)
+            print(self.tracked_satellite)
+        else:
+            index = self.combo_box.currentIndex()
+            print("No tracked satellite")
+
+        e2_data = self.satellites[index].getAngleFrom(self.observer, utc_time)
         e2_data = f"Azimuth: {e2_data[0]:.2f}, Elevation: {e2_data[1]:.2f}"
         self.e2.setText(e2_data)
 
@@ -838,6 +854,8 @@ class MainWindow(QMainWindow):
                     self.ser.write(string.encode())
                 else:
                     print(f"Satellite {satellite.name} is not overhead at {current_time}", file=file)
+                    self.tracked_satellite = None
+                    self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
                     break
 
                 sleep(5)
