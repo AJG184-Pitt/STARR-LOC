@@ -202,9 +202,9 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        ser = serial.Serial("/dev/ttyUSB0", 115200, rtscts=False, dsrdtr=False)
-        ser.rts = False
-        ser.dtr = False
+        self.ser = serial.Serial("/dev/ttyUSB0", 115200, rtscts=False, dsrdtr=False)
+        self.ser.rts = False
+        self.ser.dtr = False
 
         self.showFullScreen()
 
@@ -358,6 +358,8 @@ class MainWindow(QMainWindow):
         self.manual_flag = False
         self.combo_selected = False
         self.bluetooth_selected = False
+        self.dropdown_list = False
+        self.expanded_list = False
 
         # Initialize gpio class object
         self.gpio = GpioSetup()
@@ -367,19 +369,19 @@ class MainWindow(QMainWindow):
         # Encoder checks
         self.encoder_timer = QTimer(self)
         self.encoder_timer.timeout.connect(self.update_current_index)
-        self.encoder_timer.start(50)  # Check every 50ms
+        self.encoder_timer.start(5)  # Check every 50ms
 
         # Encoder 2 checks
         self.encoder_2_timer = QTimer(self)
         self.encoder_2_timer.timeout.connect(self.update_second_encoder)
-        self.encoder_2_timer.start(50)
+        self.encoder_2_timer.start(5)
 
         # Encoder button checks
         self.button_action_pending = False  # Add this as a class variable
         self.button2_action_pending = False  # Add this as a class variable
-        self.encoder_timer = QTimer(self)
-        self.encoder_timer.timeout.connect(self.update_button_1)  # Connect to new method
-        self.encoder_timer.start(50)  # Check every 50ms
+        self.encoder_timer_3 = QTimer(self)
+        self.encoder_timer_3.timeout.connect(self.update_button_1)  # Connect to new method
+        self.encoder_timer_3.start(5)  # Check every 50ms
         
         # Temp code for testing
         self.step_amount = 0
@@ -593,7 +595,7 @@ class MainWindow(QMainWindow):
         prev_2 = 0
             
         # Run until button is pressed again
-        while self.serial_active:
+        while 1:
             # Read encoder 1
             encoder1_change = self.gpio.read_encoder()
             encoder2_change = self.gpio.read_encoder_2()
@@ -615,10 +617,14 @@ class MainWindow(QMainWindow):
                     
                 if counter2 <= 0:
                     counter2 = 0
+
+                if counter2 >= 90:
+                    counter2 = 90
                     
                 print(f"Encoder 2 w/ counter: {encoder2_change} {counter2}")
                 
             print(f"{counter1} {counter2}\n")
+            time.sleep(0.01)
             if prev_1 != counter1 or prev_2 != counter2:
                 send_data = f"{counter1} {counter2}\n"
                 self.ser.write(send_data.encode())
@@ -640,6 +646,7 @@ class MainWindow(QMainWindow):
                 time.sleep(0.01)  # Small delay to prevent CPU hogging
 
     def update_current_index(self):
+
         previous_index = self.current_index
         # Update current index based on encoder value
         self.encode = self.gpio.read_encoder()
@@ -662,12 +669,15 @@ class MainWindow(QMainWindow):
                 key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Up, Qt.KeyboardModifier.NoModifier)
                 QApplication.sendEvent(self.combo_box, key_event)
 
-            if self.gpio.read_button_2() and not self.button2_action_pending:
-                key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_F4, Qt.KeyboardModifier.NoModifier)
+            if self.gpio.read_button_2(): # and not self.button2_action_pending:
+                if self.expanded_list == False:
+                    key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_F4, Qt.KeyboardModifier.NoModifier)
                 QApplication.sendEvent(self.combo_box, key_event)
                 self.button2_action_pending = True
             elif not self.gpio.read_button_2():
                 self.button2_action_pending = False
+        elif self.expanded_list:
+            key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_F4, Qt.KeyboardModifier.NoModifier)
 
     def update_selection(self):
         # Update UI based on current_index
@@ -691,7 +701,7 @@ class MainWindow(QMainWindow):
             self.setManualIconSelected()
         elif self.current_index == 3:
             self.auto_flag = False
-            self.combo_box = False
+            self.combo_selected = False
             self.manual_flag = False
         self.bluetooth_selected = True
         self.setBluetoothIconSelected()
@@ -704,9 +714,19 @@ class MainWindow(QMainWindow):
         if self.gpio.read_button():
             # Button is pressed, handle based on current mode
             if self.auto_flag:
-                if not self.button_action_pending:
-                    self.auto_toggle_active = not self.auto_toggle_active
-                    print(f"Auto toggle Mode: {'Active' if self.auto_toggle_active else 'Inactive'}")
+                if self.button_action_pending == False:
+                    print(f"Auto Mode Integration")
+                    self.auto_track_process = multiprocessing.Process(target=self.auto_tracking)
+                    self.auto_track_process.start()
+                    self.button_action_pending = True
+
+                    time.sleep(5)
+
+                    if self.gpio.read_button() == True:
+                        self.button_action_process.terminate()
+
+
+
             elif self.manual_flag:
                 if self.button_action_pending == False:  # Prevent repeated actions
                     print("Manual mode pending integration")
@@ -723,7 +743,7 @@ class MainWindow(QMainWindow):
         e2_data = satellites[selected].getAngleFrom(observer, local_time)
         
         e3_data = satellites[selected].nextOverhead(observer, local_time)
-        e4_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e2_data)
+        e4_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e3_data)
         
         # e4_data = satellites[selected].getAngleFrom(observer, local_time)
 
@@ -765,7 +785,12 @@ class MainWindow(QMainWindow):
         print("quick data")
         time = datetime.datetime.now(pytz.timezone("US/Eastern"))
         utc_time = time.astimezone(pytz.utc)
-        self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, utc_time)
+        #self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, utc_time)
+
+        selected = self.combo_box.currentIndex()
+        e2_data = self.satellites[selected].getAngleFrom(self.observer, utc_time)
+        e2_data = f"Azimuth: {e2_data[0]:.2f}, Elevation: {e2_data[1]:.2f}"
+        self.e2.setText(e2_data)
 
         for satellite in self.satellites:
             satellite.isOverhead(self.observer, utc_time)
