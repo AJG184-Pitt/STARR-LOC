@@ -789,7 +789,6 @@ class MainWindow(QMainWindow):
 
             print("Button 2 pressed")
 
-
     def update_selection(self):
         # Update UI based on current_index
         if self.current_index == 0:
@@ -917,8 +916,6 @@ class MainWindow(QMainWindow):
         for i, text in enumerate(sat_labels):
             self.combo_box.setItemText(i, text)
 
-
-
     def reread_data(self, signum=None, frame=None):
 
             print("rereading data")
@@ -927,9 +924,6 @@ class MainWindow(QMainWindow):
             self.observer = Observer(file_path="../bluetooth/gps.data")
             
             self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
-
-
-
 
     def auto_tracking(self):
         """
@@ -961,7 +955,6 @@ class MainWindow(QMainWindow):
 
                 sleep(5)
 
-
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
@@ -970,7 +963,6 @@ def main():
     window.show()
 
     sys.exit(app.exec())
-
 
 if __name__ == '__main__':
     main()
