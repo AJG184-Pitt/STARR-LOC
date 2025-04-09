@@ -545,7 +545,7 @@ class MainWindow(QMainWindow):
         prev_2 = 0
         
         # Run until button is pressed again
-        while self.serial_active:
+        while(1):
             # Read encoder 1
             encoder1_change = self.gpio.read_encoder()
             encoder2_change = self.gpio.read_encoder_2()
@@ -571,6 +571,7 @@ class MainWindow(QMainWindow):
                 print(f"Encoder 2 w/ counter: {encoder2_change} {counter2}")
             
             print(f"{counter1} {counter2}\n")
+            time.sleep(1)
             if prev_1 != counter1 or prev_2 != counter2:
                 send_data = f"{counter1} {counter2}\n"
                 self.ser.write(send_data.encode())
