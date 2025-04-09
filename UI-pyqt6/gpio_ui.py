@@ -1,11 +1,13 @@
-from PyQt6.QtGui import QFont, QPixmap, QKeyEvent
+from PyQt6.QtGui import QPixmap, QKeyEvent
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QComboBox,
-                            QLineEdit, QLabel, QGridLayout, QWidget, QVBoxLayout)
-from PyQt6.QtCore import QSize, Qt, pyqtSignal, QEvent, QTimer
+                            QLineEdit, QLabel, QGridLayout, QWidget)
+from PyQt6.QtCore import Qt, pyqtSignal, QEvent, QTimer
 
 import sys
 import os
 from serial import Serial
+from time import sleep
+import time
 
 # Add the relative path (this might work in some cases)
 sys.path.append('../sgp4')
@@ -19,10 +21,9 @@ from observer import Observer
 from satellite import Satellite
 import pytz, datetime
 
-import subprocess
+import subprocess, multiprocessing
 
 import RPi.GPIO as GPIO
-import time
 
 class GpioSetup():
     def __init__(self):
@@ -193,22 +194,33 @@ class CustomComboBox(QComboBox):
         return super().keyPressEvent(event)
 
 class MainWindow(QMainWindow):
+    
+    auto_track = pyqtSignal()
+    
     def __init__(self):
         super().__init__()
 
+        self.ser = Serial('/dev/ttyUSB0', 115200, timeout=1)
+        self.ser.rts = False
+        self.ser.dtr = False
+
         # Information gathering
-        # self.tle_file_path = "../bluetooth/tle.data"
-        # self.gps_file_path = "../bluetooth/gps.data"
-        # self.tle_data = sgpb.read_tle_file(self.tle_file_path)
-
-        file_path = "../sgp4/tle.txt"
-        self.tle_data = sgpb.read_tle_file(file_path)
+        self.tle_file_path = "../bluetooth/tle.data"
+        self.gps_file_path = "../bluetooth/gps.data"
         
-        self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
+        if os.path.exists(self.tle_file_path):
         
-        # observer = Observer(file_path=self.gps_file_path)
-        observer = Observer(lat=40.4442, lon=-79.9557, alt=300)
+            self.tle_data = sgpb.read_tle_file(self.tle_file_path)
 
+            self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
+
+        if os.path.exists(self.gps_file_path):
+            self.observer = Observer(file_path=self.gps_file_path)
+
+        self.process = None
+        self.process_running = False
+        self.auto_track_process = multiprocessing.Process
+                
         et = pytz.timezone("US/Eastern")
         local_time = datetime.datetime.now(et)
         # utc_time = local_time.astimezone(pytz.utc)
@@ -231,18 +243,18 @@ class MainWindow(QMainWindow):
         grid = QGridLayout(central_widget)
 
         # Sort list based on distance
-        self.satellites = sorted(self.satellites, key=lambda sat: sat.getAngleFrom(observer, local_time)[2])
+        self.satellites = sorted(self.satellites, key=lambda sat: sat.getAngleFrom(self.observer, local_time)[2])
         
         # Create custom combo box and populate it
         self.combo_box = CustomComboBox()
-        options = [f"{sat.name} ({sat.getAngleFrom(observer, local_time)[2][0]:.2f} kilometers | Overhead: {sat.overhead})" for sat in self.satellites]
-        self.combo_box.addItems(options)
+        # options = [f"{sat.name} ({sat.getAngleFrom(self.observer, local_time)[2]:.2f} kilometers | Overhead: {sat.overhead})" for sat in self.satellites]
+        # self.combo_box.addItems(options)
         self.combo_box.setFixedWidth(390)
         self.combo_box.setFixedHeight(40)
         
         # Call method for selected satellite
         self.combo_box.currentIndexChanged.connect(
-            lambda: self.sat_data(self.satellites, self.combo_box.currentIndex(), observer, local_time)
+            lambda: self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, local_time)
         )
 
         # Create entry widgets
@@ -360,12 +372,73 @@ class MainWindow(QMainWindow):
         self.encoder_timer = QTimer(self)
         self.encoder_timer.timeout.connect(self.update_button_1)  # Connect to new method
         self.encoder_timer.start(50)  # Check every 50ms
+
+        # Refresh data timer
+        self.data_timer = QTimer(self)
+        self.data_timer.timeout.connect(self.quick_data)
+        self.data_timer.start(5000)
+
+        self.reread_data()
         
         # Temp code for testing
         self.step_amount = 0
 
         # Automatic mode flag
         self.auto_toggle_active = False
+
+        options = [f"{sat.name:20} | " if not sat.overhead else f"{sat.name:20} | Overhead" for sat in self.satellites]
+        self.combo_box.clear()
+        self.combo_box.addItems(options)
+
+    def quick_data(self):
+        print("quick data")
+        time = datetime.datetime.now(pytz.timezone("US/Eastern"))
+        utc_time = time.astimezone(pytz.utc)
+        self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, utc_time)
+
+        for satellite in self.satellites:
+            satellite.isOverhead(self.observer, utc_time)
+
+        sat_labels = [f"{sat.name:20} | " if not sat.overhead else f"{sat.name:20} | Overhead" for sat in self.satellites]
+        for i, text in enumerate(sat_labels):
+            self.combo_box.setItemText(i, text)
+
+    def reread_data(self, signum=None, frame=None):
+        print("rereading data")
+        self.tle_data = sgpb.read_tle_file("../bluetooth/tle.data")
+        self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
+        self.observer = Observer(file_path='../bluetooth/gps.data')
+        
+        self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
+
+    def auto_tracking(self):
+        """
+        Auto tracking loop
+        """
+        satellite = self.satellites[self.combo_box.currentIndex()]
+
+        with open("auto_tracking_doc.txt", "a") as file:
+            
+            while(1):
+                # Get current time
+                current_time = datetime.datetime.now(pytz.timezone("US/Eastern"))
+                current_time = current_time.astimezone(pytz.utc)
+
+                # Satellite position and angle
+                angle = satellite.getAngleFrom(self.observer, current_time)
+
+                # Check overhead
+                if angle[1] > 0:
+                    print(f"Satellite {satellite.name} is overhead at {current_time}", file=file)
+                    print(f"{angle[0]=} & {angle[1]=}", file=file)
+                    # Send motor command 
+                    string = f"{angle[0]:.4f} {angle[1]:.4f} 0"
+                    self.ser.write(string.encode())
+                else:
+                    print(f"Satellite {satellite.name} is not overhead at {current_time}", file=file)
+                    break
+                
+                sleep(5)
 
     def update_current_index(self):
         previous_index = self.current_index
@@ -432,12 +505,18 @@ class MainWindow(QMainWindow):
         if self.gpio.read_button():
             # Button is pressed, handle based on current mode
             if self.auto_flag:
-                if not self.button_action_pending:
-                    self.auto_toggle_active = not self.auto_toggle_active
-                    print(f"Auto toggle Mode: {'Active' if self.auto_toggle_active else 'Inactive'}")
+                if self.button_action_pending == False:
+                    print("Auto mode integreation")
+                    self.auto_track_process = multiprocessing.Process(target=self.auto_tracking)
+                    self.auto_track_process.start()
+                    self.button_action_pending = True
+
+                    if self.gpio.read_button() == True:
+                        self.button_action_process.terminate()
+
             elif self.manual_flag:
                 if self.button_action_pending == False:  # Prevent repeated actions
-                    print("Manual mode pending integration")
+                    print("Manual mode pending integration...")
                     self.manual_encoder_control()
                     self.button_action_pending = True
         else:
@@ -452,83 +531,64 @@ class MainWindow(QMainWindow):
         Designed to be called directly when the button is pressed.
         """
         # Flags to track state
-        self.serial_active = not getattr(self, 'serial_active', False)
         
         # If we're turning off the connection, just exit
-        if not self.serial_active:
-            print("Stopping serial control")
-            return
+        # Open serial connection
+            
+        print("Serial connection established")
+
+        counter1 = 0
+        counter2 = 0
+        prev_1 = 0
+        prev_2 = 0
         
-        print("Starting serial control")
-        try:
-            # Open serial connection
-            ser = Serial('/dev/ttyUSB0', 115200, timeout=1)
-            time.sleep(0.5)  # Give serial connection time to initialize
+        # Run until button is pressed again
+        while self.serial_active:
+            # Read encoder 1
+            encoder1_change = self.gpio.read_encoder()
+            encoder2_change = self.gpio.read_encoder_2()
             
-            print("Serial connection established")
-
-            counter1 = 0
-            counter2 = 0
-            prev_1 = 0
-            prev_2 = 0
+            if encoder1_change != 0:
+                # Send encoder 1 data when it changes
+                if encoder1_change == 1:
+                    counter1 += 1
+                elif encoder1_change == -1:
+                    counter1 -= 1
+                
+                print(f"Encoder 1 w/ counter: {encoder1_change} {counter1}\n")
             
-            # Run until button is pressed again
-            while self.serial_active:
-                # Read encoder 1
-                encoder1_change = self.gpio.read_encoder()
-                encoder2_change = self.gpio.read_encoder_2()
+            elif encoder2_change != 0:
+                if encoder2_change == 1:
+                    counter2 += 1
+                elif encoder2_change == -1:
+                    counter2 -= 1
                 
-                if encoder1_change != 0:
-                    # Send encoder 1 data when it changes
-                    if encoder1_change == 1:
-                        counter1 += 1
-                    elif encoder1_change == -1:
-                        counter1 -= 1
-                    
-                    print(f"Encoder 1 w/ counter: {encoder1_change} {counter1}\n")
+                if counter2 <= 0:
+                    counter2 = 0
                 
-                elif encoder2_change != 0:
-                    if encoder2_change == 1:
-                        counter2 += 1
-                    elif encoder2_change == -1:
-                        counter2 -= 1
-                    
-                    if counter2 <= 0:
-                        counter2 = 0
-                    
-                    print(f"Encoder 2 w/ counter: {encoder2_change} {counter2}")
-                
-                print(f"{counter1} {counter2}\n")
-                if prev_1 != counter1 or prev_2 != counter2:
-                    send_data = f"{counter1} {counter2}\n"
-                    ser.write(send_data.encode())
+                print(f"Encoder 2 w/ counter: {encoder2_change} {counter2}")
+            
+            print(f"{counter1} {counter2}\n")
+            if prev_1 != counter1 or prev_2 != counter2:
+                send_data = f"{counter1} {counter2}\n"
+                self.ser.write(send_data.encode())
 
-                    prev_1 = counter1
-                    prev_2 = counter2
-                
-                # if encoder2_change != 0:
-                #     # Send encoder 2 data when it changes
-                #     print(f"Sending encoder 2: {encoder2_change}")
-                #     ser.write(f"E2:{encoder2_change}\n".encode())
-                
-                # Check if button is pressed to exit the loop
-                if self.gpio.read_button() == True:
-                    time.sleep(0.1)  # Debounce
-                    print("Button pressed, exiting serial control")
-                    self.serial_active = False
-                    break
-                
-                time.sleep(0.01)  # Small delay to prevent CPU hogging
-                
-        except Exception as e:
-            print(f"Serial communication error: {e}")
-        finally:
-            try:
-                ser.close()
-                print("Serial connection closed")
-            except:
-                pass
-            self.serial_active = False
+                prev_1 = counter1
+                prev_2 = counter2
+            
+            # if encoder2_change != 0:
+            #     # Send encoder 2 data when it changes
+            #     print(f"Sending encoder 2: {encoder2_change}")
+            #     ser.write(f"E2:{encoder2_change}\n".encode())
+            
+            # Check if button is pressed to exit the loop
+            if self.gpio.read_button() == True:
+                time.sleep(0.1)  # Debounce
+                print("Button pressed, exiting serial control")
+                break
+            
+            time.sleep(0.01)  # Small delay to prevent CPU hogging
+        
         
     def eventFilter(self, obj, event):
         # Check if the event is a key press event
@@ -697,24 +757,24 @@ class MainWindow(QMainWindow):
 
     def sat_data(self, satellites, selected, observer, local_time):
         # Get data from the satellite object
-        e1_data = satellites[selected].getAngleFrom(observer, local_time)
+        e2_data = satellites[selected].getAngleFrom(observer, local_time)
         
-        e2_data = satellites[selected].nextOverhead(observer, local_time)
-        e3_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e2_data)
+        e3_data = satellites[selected].nextOverhead(observer, local_time)
+        e4_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e3_data)
         
         # e4_data = satellites[selected].getAngleFrom(observer, local_time)
 
-        e5_data = str(observer.lat) + " , " + str(observer.lon) + " , " + str(observer.alt)
+        e5_data = f"Lat: {observer.lat:.2f}, Lon: {observer.lon:.2f}, Alt: {observer.alt:.2f}"
         
         # String formatting for displaying results
-        e1_data = "AZ: " + str(e1_data[0][0]) + " , " + "EL: " + str(e1_data[1][0])
-        e2_data = e2_data.strftime("%Y-%m-%d %H:%M:%S")
-        e3_data = str(e3_data)
-        e4_data = str("-1")
+        e2_data = f"Azimuth: {e2_data[0]:.2f}, Elevation: {e2_data[1]:.2f}"
+        e3_data = e3_data.astimezone(pytz.timezone('US/Eastern')).strftime("%Y-%m-%d %H:%M:%S")
+        e4_data = f"Minutes: {e4_data[0]}, Seconds: {e4_data[1]}"
+        # e4_data = str("-1")
         # e5_data = str(e5_data)
         
         # Pass satellite data into text boxes
-        self.e1.setText(e1_data)
+        self.e1.setText("Satellite")
         self.e2.setText(e2_data)
         self.e3.setText(e3_data)
         self.e4.setText(e4_data)
@@ -723,6 +783,8 @@ class MainWindow(QMainWindow):
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
+    
+    window.auto_track.connect(window.auto_tracking)
     window.show()
     sys.exit(app.exec())
 
