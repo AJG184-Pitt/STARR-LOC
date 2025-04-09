@@ -230,17 +230,17 @@ class MainWindow(QMainWindow):
         self.setFixedSize(800, 480)
 
         # Create central widget and layout
-        central_widget = QWidget()
+        self.central_widget = QWidget()
         background_image = "Assets/star_background"
-        central_widget.setStyleSheet(f"""
+        self.central_widget.setStyleSheet(f"""
             QWidget {{
                 background-image: url({background_image});            
                 background-repeat: no-repeat;
                 background-position: center;
             }}
         """)
-        self.setCentralWidget(central_widget)
-        grid = QGridLayout(central_widget)
+        self.setCentralWidget(self.central_widget)
+        grid = QGridLayout(self.central_widget)
 
         # Sort list based on distance
         self.satellites = sorted(self.satellites, key=lambda sat: sat.getAngleFrom(self.observer, local_time)[2])
@@ -266,23 +266,29 @@ class MainWindow(QMainWindow):
         self.e6 = QLineEdit()
 
         # Create interactable icons
-        self.auto_image = QLabel(central_widget)
+        self.auto_image = QLabel(self.central_widget)
         self.auto_image.setGeometry(10, 400, 64, 64)
         pixmap1 = QPixmap('Assets/auto.png')
         pixmap1 = pixmap1.scaled(64, 64)
         self.auto_image.setPixmap(pixmap1)
 
-        self.manual_image = QLabel(central_widget)
+        self.manual_image = QLabel(self.central_widget)
         self.manual_image.setGeometry(100, 400, 64, 64)
         pixmap2 = QPixmap('Assets/manual.png')
         pixmap2 = pixmap2.scaled(64, 64)
         self.manual_image.setPixmap(pixmap2)
 
-        self.bluetooth_image = QLabel(central_widget)
+        self.bluetooth_image = QLabel(self.central_widget)
         self.bluetooth_image.setGeometry(190, 400, 48, 64)
         pixmap3 = QPixmap('Assets/bluetooth.png')
         pixmap3 = pixmap3.scaled(48, 64)
         self.bluetooth_image.setPixmap(pixmap3)
+
+        self.radio_image = QLabel(self.central_widget)
+        self.radio_image.setGeometry(280, 400, 32, 64)
+        pixmap4 = QPixmap('Assets/radio.png')
+        pixmap4 = pixmap4.scaled(32, 64)
+        self.radio_image.setPixmap(pixmap4)
 
         # Labels for satellite information
         self.label1 = QLabel("Current Angle:")
@@ -349,11 +355,12 @@ class MainWindow(QMainWindow):
         self.auto_flag = False
         self.manual_flag = False
         self.combo_selected = False
-        self.bluetooth_selected = False
+        self.bluetooth_flag = False
+        self.radio_flag = False
         
         # Initialize gpio class object
         self.gpio = GpioSetup()
-        self.selected_labels = [0, 1, 2, 3]
+        self.selected_labels = [0, 1, 2, 3, 4]
         self.current_index = 0
         
         # Encoder checks
@@ -463,12 +470,16 @@ class MainWindow(QMainWindow):
                 key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Up, Qt.KeyboardModifier.NoModifier)
                 QApplication.sendEvent(self.combo_box, key_event)
 
-            if self.gpio.read_button_2():
-                key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_F4, Qt.KeyboardModifier.NoModifier)
-                QApplication.sendEvent(self.combo_box, key_event)
-                self.button2_action_pending = True
-            elif not self.gpio.read_button_2():
-                self.button2_action_pending = False
+        if self.gpio.read_button_2():
+            # key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_F4, Qt.KeyboardModifier.NoModifier)
+            self.combo_box.showPopup()
+            if self.combo_box.activated():
+                self.combo_box.hidePopup()
+
+            # QApplication.sendEvent(self.combo_box.showPopup(), key_event)
+            # self.button2_action_pending = True
+        # elif not self.gpio.read_button_2():
+        #     self.button2_action_pending = False
 
     def update_selection(self):
         # Update UI based on current_index
@@ -476,27 +487,38 @@ class MainWindow(QMainWindow):
             self.auto_flag = True
             self.combo_selected = False
             self.manual_flag = False
-            self.bluetooth_selected = False
+            self.bluetooth_flag = False
+            self.radio_flag = False
             self.setAutoIconSelected()
         elif self.current_index == 1:
             self.auto_flag = False
             self.combo_selected = True
             self.manual_flag = False
-            self.bluetooth_selected = False
+            self.bluetooth_flag = False
+            self.radio_flag = False
             self.setDropdownSelected()
         elif self.current_index == 2:
             self.auto_flag = False
             self.combo_selected = False
             self.manual_flag = True
-            self.bluetooth_selected = False
+            self.bluetooth_flag = False
+            self.radio_flag = False
             self.setManualIconSelected()
         elif self.current_index == 3:
             self.auto_flag = False
-            self.combo_box = False
+            self.combo_selected = False
             self.manual_flag = False
-        self.bluetooth_selected = True
-        self.setBluetoothIconSelected()
-        
+            self.bluetooth_flag = True
+            self.radio_flag = False
+            self.setBluetoothIcon()
+        elif self.current_index == 4:
+            self.auto_flag = False
+            self.combo_selected = False
+            self.manual_flag = False
+            self.bluetooth_flag = False
+            self.radio_flag = True
+            self.setRadioSelected()
+
     def update_button_1(self):
         # First update encoder position
         self.update_current_index()
@@ -507,20 +529,33 @@ class MainWindow(QMainWindow):
             if self.auto_flag:
                 if self.button_action_pending == False:
                     print("Auto mode integreation")
-                    self.auto_track_process = multiprocessing.Process(target=self.auto_tracking)
+                    # Needs moved
+                    # self.auto_track_process = multiprocessing.Process(target=self.auto_tracking)
                     self.auto_track_process.start()
                     self.button_action_pending = True
 
-                    time.sleep(5)
-
-                    if self.gpio.read_button() == True:
-                        self.button_action_process.terminate()
+                elif self.auto_track_process.is_alive() and self.button_action_pending == False:
+                    # This handles the case when button is pressed again to stop tracking
+                    print("Stopping auto tracking")
+                    self.auto_track_process.terminate()
+                    # self.auto_track_process.join()
 
             elif self.manual_flag:
                 if self.button_action_pending == False:  # Prevent repeated actions
                     print("Manual mode pending integration...")
                     self.manual_encoder_control()
                     self.button_action_pending = True
+
+            elif self.bluetooth_flag:
+                if self.button_action_pending == False:
+                    # Logic for bluetooth connection initialization
+                    return
+                
+            elif self.radio_flag:
+                if self.button_action_pending == False:
+                    # Logic for radio connection
+                    return
+
         else:
             # Button is released
             self.button_action_pending = False
@@ -621,22 +656,42 @@ class MainWindow(QMainWindow):
         return super().eventFilter(obj, event)
     
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key.Key_J:
-           self.auto_flag = True
-           self.combo_selected = False
-           self.manual_flag = False
-           self.setAutoIconSelected()
-        elif event.key() == Qt.Key.Key_K:
+        if event.key() == Qt.Key.Key_A:
+            self.auto_flag = True
+            self.combo_selected = False
+            self.manual_flag = False
+            self.bluetooth_flag = False
+            self.radio_flag = False
+            self.setAutoIconSelected()
+        elif event.key() == Qt.Key.Key_W:
             self.auto_flag = False
             self.combo_selected = True
             self.manual_flag = False
+            self.bluetooth_flag = False
+            self.radio_flag = False
             self.setDropdownSelected()
-        elif event.key() == Qt.Key.Key_L:
+        elif event.key() == Qt.Key.Key_S:
             self.auto_flag = False
             self.combo_selected = False
             self.manual_flag = True
+            self.bluetooth_flag = False
+            self.radio_flag = False
             self.setManualIconSelected()
-
+        elif event.key() == Qt.Key.Key_D:
+            self.auto_flag = False
+            self.combo_selected = False
+            self.manual_flag = False
+            self.bluetooth_flag = True
+            self.radio_flag = False
+            self.setBluetoothIcon()
+        elif event.key() == Qt.Key.Key_F:
+            self.auto_flag = False
+            self.combo_selected = False
+            self.manual_flag = False
+            self.bluetooth_flag = False
+            self.radio_flag = True
+            self.setRadioSelected()
+        
         super().keyPressEvent(event)
 
     def setDropdownSelected(self):
@@ -678,6 +733,8 @@ class MainWindow(QMainWindow):
         """)
         self.manual_image.setStyleSheet("")
         self.auto_image.setStyleSheet("")
+        self.bluetooth_image.setStyleSheet("")
+        self.radio_image.setStyleSheet("")
         
     def setManualIconSelected(self):
         self.manual_image.setStyleSheet("border: 2px solid yellow")
@@ -716,6 +773,8 @@ class MainWindow(QMainWindow):
                 border-radius: 3px;
             }
         """)
+        self.bluetooth_image.setStyleSheet("")
+        self.radio_image.setStyleSheet("")
 
     def setAutoIconSelected(self):
         self.auto_image.setStyleSheet("border: 2px solid yellow")
@@ -754,9 +813,88 @@ class MainWindow(QMainWindow):
                 border-radius: 3px;
             }
         """)
+        self.bluetooth_image.setStyleSheet("")
+        self.radio_image.setStyleSheet("")
 
-    def setBluetoothIconSelected(self):
-        return 0
+    def setBluetoothIcon(self):
+        self.auto_image.setStyleSheet("")
+        self.manual_image.setStyleSheet("")
+        self.combo_box.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #27a7d8;
+                border-radius: 5px;
+                padding: 1px 18px 1px 3px;
+                min-width: 6em;
+                color: white;
+                font-family: JetBrains Mono;
+                font-size: 14px;
+            }
+            
+            QComboBox::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 15px; /* Adjust as needed */
+                border-left-width: 1px;
+                border-left-color: darkgrey;
+                border-left-style: solid; 
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+                background-image: none; /* Remove default arrow */
+            }
+            
+            QComboBox::down-arrow {
+                border-image: url('Assets/drop-arrow');
+            }
+            
+            QComboBox QAbstractItemView {
+                background-color: grey; /* Dark grey for dropdown items */
+                color: white; /* Font color inside the dropdown */
+                border: 1px solid #27a7d8;
+                border-radius: 3px;
+            }
+        """)
+        self.bluetooth_image.setStyleSheet("border: 2px solid yellow")
+        self.radio_image.setStyleSheet("")
+
+    def setRadioSelected(self):
+        self.auto_image.setStyleSheet("")
+        self.manual_image.setStyleSheet("")
+        self.combo_box.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #27a7d8;
+                border-radius: 5px;
+                padding: 1px 18px 1px 3px;
+                min-width: 6em;
+                color: white;
+                font-family: JetBrains Mono;
+                font-size: 14px;
+            }
+            
+            QComboBox::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 15px; /* Adjust as needed */
+                border-left-width: 1px;
+                border-left-color: darkgrey;
+                border-left-style: solid; 
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+                background-image: none; /* Remove default arrow */
+            }
+            
+            QComboBox::down-arrow {
+                border-image: url('Assets/drop-arrow');
+            }
+            
+            QComboBox QAbstractItemView {
+                background-color: grey; /* Dark grey for dropdown items */
+                color: white; /* Font color inside the dropdown */
+                border: 1px solid #27a7d8;
+                border-radius: 3px;
+            }
+        """)
+        self.bluetooth_image.setStyleSheet("")
+        self.radio_image.setStyleSheet("border: 2px solid yellow")
 
     def sat_data(self, satellites, selected, observer, local_time):
         # Get data from the satellite object
