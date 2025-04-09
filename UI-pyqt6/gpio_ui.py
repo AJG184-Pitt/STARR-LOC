@@ -359,19 +359,19 @@ class MainWindow(QMainWindow):
         # Encoder checks
         self.encoder_timer = QTimer(self)
         self.encoder_timer.timeout.connect(self.update_current_index)
-        self.encoder_timer.start(50)  # Check every 50ms
+        self.encoder_timer.start(5)  # Check every 50ms
 
         # Encoder 2 checks
         self.encoder_2_timer = QTimer(self)
         self.encoder_2_timer.timeout.connect(self.update_second_encoder)
-        self.encoder_2_timer.start(50)
+        self.encoder_2_timer.start(5)
 
         # Encoder button checks
         self.button_action_pending = False  # Add this as a class variable
         self.button2_action_pending = False  # Add this as a class variable
         self.encoder_timer_3 = QTimer(self)
         self.encoder_timer_3.timeout.connect(self.update_button_1)  # Connect to new method
-        self.encoder_timer_3.start(50)  # Check every 50ms
+        self.encoder_timer_3.start(5)  # Check every 50ms
 
         # Refresh data timer
         self.data_timer = QTimer(self)
@@ -463,7 +463,7 @@ class MainWindow(QMainWindow):
                 key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Up, Qt.KeyboardModifier.NoModifier)
                 QApplication.sendEvent(self.combo_box, key_event)
 
-            if self.gpio.read_button_2() and not self.button2_action_pending:
+            if self.gpio.read_button_2():
                 key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_F4, Qt.KeyboardModifier.NoModifier)
                 QApplication.sendEvent(self.combo_box, key_event)
                 self.button2_action_pending = True
@@ -510,6 +510,8 @@ class MainWindow(QMainWindow):
                     self.auto_track_process = multiprocessing.Process(target=self.auto_tracking)
                     self.auto_track_process.start()
                     self.button_action_pending = True
+
+                    time.sleep(5)
 
                     if self.gpio.read_button() == True:
                         self.button_action_process.terminate()
