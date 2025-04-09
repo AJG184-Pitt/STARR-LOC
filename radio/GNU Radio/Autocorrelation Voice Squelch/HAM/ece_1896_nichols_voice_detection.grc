@@ -16,15 +16,14 @@ options:
 =======
     generate_options: no_gui
     hier_block_src_path: '.:'
-    id: options
->>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
+    id: ece_1896_fm_rx
     max_nouts: '0'
     output_language: python
     placement: (0,0)
     qt_qss_theme: ''
     realtime_scheduling: ''
     run: 'True'
-    run_command: '{python} -u {filename}'
+    run_command: '{python} -u {filename} {147540000}'
     run_options: prompt
     sizing_mode: fixed
     thread_safe_setters: ''
@@ -133,7 +132,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [296, 80.0]
+    coordinate: [304, 80.0]
     rotation: 0
     state: disabled
 - name: int_length
@@ -418,6 +417,28 @@ blocks:
     coordinate: [456, 512.0]
     rotation: 0
     state: enabled
+- name: blocks_file_source_0
+  id: blocks_file_source
+  parameters:
+    affinity: ''
+    alias: ''
+    begin_tag: pmt.PMT_NIL
+    comment: ''
+    file: ''
+    length: '0'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    offset: '0'
+    repeat: 'True'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [136, 480.0]
+    rotation: 0
+    state: disabled
 - name: blocks_integrate_xx_0
   id: blocks_integrate_xx
   parameters:
@@ -720,11 +741,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-<<<<<<< HEAD
-    coordinate: [464, 168.0]
-=======
-    coordinate: [464, 160.0]
->>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
+    coordinate: [464, 176.0]
     rotation: 0
     state: enabled
 - name: epy_block_0_0
@@ -808,7 +825,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [8, 108.0]
+    coordinate: [8, 124.0]
     rotation: 0
     state: enabled
 - name: qtgui_auto_correlator_sink_0
@@ -1265,11 +1282,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-<<<<<<< HEAD
-    coordinate: [720, 160.0]
-=======
-    coordinate: [712, 152.0]
->>>>>>> 31fd02feec94a1974de3bd8cdfc8b8b5f3a58a14
+    coordinate: [712, 160.0]
     rotation: 0
     state: enabled
 - name: virtual_source_0

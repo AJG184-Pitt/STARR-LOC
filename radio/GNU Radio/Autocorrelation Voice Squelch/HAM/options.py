@@ -53,7 +53,7 @@ class options(gr.top_block):
         self.iio_pluto_source_0.set_len_tag_key('packet_len')
         self.iio_pluto_source_0.set_frequency(carrier_freq)
         self.iio_pluto_source_0.set_samplerate(RF_samp_rate)
-        self.iio_pluto_source_0.set_gain_mode(0, 'manual')
+        self.iio_pluto_source_0.set_gain_mode(0, 'slow_attack')
         self.iio_pluto_source_0.set_gain(0, rf_gain)
         self.iio_pluto_source_0.set_quadrature(True)
         self.iio_pluto_source_0.set_rfdc(True)
