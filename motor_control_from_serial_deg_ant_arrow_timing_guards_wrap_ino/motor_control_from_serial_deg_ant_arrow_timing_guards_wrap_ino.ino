@@ -106,7 +106,20 @@ void loop(){
     if (el_target_str != NULL) { el_deg_target = atof(el_target_str);}
     if (dur_str != NULL) { dur = atof(dur_str);}
 
-    if( (az_deg_target <= 360) & (az_deg_target >= -360) & (el_deg_target >= 0) & (el_deg_target <= 90)) {
+    // find closest reference angle within -270 to 270
+    if( abs(az_deg_curr - (az_deg_target)) > abs(az_deg_curr - (az_deg_target + 360)) ){
+      az_deg_target += 360;
+    }
+
+    else if( abs(az_deg_curr - (az_deg_target)) > abs(az_deg_curr - (az_deg_target - 360)) ){
+      az_deg_target -= 360;
+    }
+
+    // make sure target within bounds
+    if( az_deg_target > 270) { az_deg_target -= 360;}
+    else if( az_deg_target < -270) { az_deg_target += 360;}
+
+    if( (az_deg_target <= 270) & (az_deg_target >= -270) & (el_deg_target >= 0) & (el_deg_target <= 90)) {
 
       // get azimuth step adjustment from angle difference
       float az_deg_adj = az_deg_target - az_deg_curr;
