@@ -23,6 +23,7 @@ class Satellite:
         """
         Get the ECI coordinates of the satellite. Returns Tuple (x, y, z) in km
         """
+        date_time = date_time.astimezone(pytz.utc)
         self.last_pos = sgpb.sgp4_run(self.tle1, self.tle2, date_time)
         return self.last_pos
 

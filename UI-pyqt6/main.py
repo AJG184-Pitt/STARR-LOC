@@ -279,14 +279,14 @@ class MainWindow(QMainWindow):
             elif event.key() == Qt.Key.Key_F5:
                 self.startBluetoothServer()
             elif event.key() == Qt.Key.Key_F6:
-                #self.auto_track_process.terminate()
-                #self.auto_track.stop()
+                self.auto_track_process.terminate()
                 pass
             elif event.key() == Qt.Key.Key_F7:
                 #self.fake_datetime += datetime.timedelta(seconds=60)
                 print("Starting Process")
-                #self.auto_track_process = multiprocessing.Process(target=self.auto_tracking)
-                self.auto_track.emit()
+                self.auto_track_process = multiprocessing.Process(target=self.auto_tracking)
+                self.auto_track_process.start()
+                #self.auto_track.emit()
 
                 #if angle[1] > 0:
                     #print("Sending motor command to esp32")
@@ -452,7 +452,7 @@ class MainWindow(QMainWindow):
         # String formatting for displaying results
         #e1_data = "AZ: " + str(e1_data[0]) + " , " + "EL: " + str(e1_data[1])
         e1_data = f"Azimuth: {e1_data[0]:.2f}, Elevation: {e1_data[1]:.2f}"
-        e2_data = e2_data.strftime("%Y-%m-%d %H:%M:%S")
+        e2_data = e2_data.astimezone(pytz.timezone('US/Eastern')).strftime("%Y-%m-%d %H:%M:%S")
         #e3_data = str(e3_data)
         e3_data = f"Minutes : {e3_data[0]}, Seconds: {e3_data[1]}"
         e4_data = str("-1")
@@ -483,10 +483,12 @@ class MainWindow(QMainWindow):
     def quick_data(self):
         print("quick data")
         time = datetime.datetime.now(pytz.timezone("US/Eastern"))
-        self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, time)
+        #time = datetime.datetime.now()
+        utc_time = time.astimezone(pytz.utc)
+        self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, utc_time)
 
         for satellite in self.satellites:
-            satellite.isOverhead(self.observer, time)
+            satellite.isOverhead(self.observer, utc_time)
 
         #sat_labels = [f"{sat.name:20} | {overhead:10} " for sat in self.satellites]
         sat_labels = [f"{sat.name:20} | " if not sat.overhead else f"{sat.name:20} |     Overhead " for sat in self.satellites]
@@ -513,25 +515,30 @@ class MainWindow(QMainWindow):
         """
         satellite = self.satellites[self.combo_box.currentIndex()]
 
-        while (1):
-            # Get the current time
-            current_time = datetime.datetime.now(pytz.timezone("US/Eastern"))
+        with open("auto_tracking_doc.txt", "a") as file:
 
-            # Get the satellite position and angle
-            angle = satellite.getAngleFrom(self.observer, current_time)
-            # Check if the satellite is overhead
-            #if satellite.isOverhead(self.observer, current_time):
-            if angle[1] > 0: 
-                print(f"Satellite {satellite.name} is overhead at {current_time}")
-                # Send motor command to ESP32
-                string = f"{angle[0]} {angle[1]} 0"
-                ser.write(string.encode())
-                #self.serial.write(string.encode())
-            else:
-                print(f"Satellite {satellite.name} is not overhead at {current_time}")
-                break
+            while (1):
+                # Get the current time
+                current_time = datetime.datetime.now(pytz.timezone("US/Eastern"))
+                current_time = current_time.astimezone(pytz.utc)
+                #current_time += datetime.timedelta(seconds=5)
 
-            sleep(1)
+                # Get the satellite position and angle
+                angle = satellite.getAngleFrom(self.observer, current_time)
+                # Check if the satellite is overhead
+                #if satellite.isOverhead(self.observer, current_time):
+                if angle[1] > 0: 
+                    print(f"Satellite {satellite.name} is overhead at {current_time}", file=file)
+                    print(f"{angle[0]=} & {angle[1]=}", file=file)
+                    # Send motor command to ESP32
+                    string = f"{angle[0]:.4f} {angle[1]:.4f} 0"
+                    ser.write(string.encode())
+                    #self.serial.write(string.encode())
+                else:
+                    print(f"Satellite {satellite.name} is not overhead at {current_time}", file=file)
+                    break
+
+                sleep(5)
 
 
 def main():
