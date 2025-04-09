@@ -341,8 +341,14 @@ class MainWindow(QMainWindow):
         self.encoder_timer.timeout.connect(self.update_current_index)
         self.encoder_timer.start(50)  # Check every 50ms
 
+        # Encoder 2 checks
+        self.encoder_2_timer = QTimer(self)
+        self.encoder_2_timer.timeout.connect(self.update_second_encoder)
+        self.encoder_2_timer.start(50)
+
         # Encoder button checks
         self.button_action_pending = False  # Add this as a class variable
+        self.button2_action_pending = False  # Add this as a class variable
         self.encoder_timer = QTimer(self)
         self.encoder_timer.timeout.connect(self.update_button)  # Connect to new method
         self.encoder_timer.start(50)  # Check every 50ms
@@ -365,6 +371,23 @@ class MainWindow(QMainWindow):
         # Update UI if index changed
         if previous_index != self.current_index:
             self.update_selection()
+
+    def update_second_encoder(self):
+        if self.combo_selected:
+            encoder2_value = self.gpio.read_encoder_2()
+            if encoder2_value == 1:
+                key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Down, Qt.KeyboardModifier.NoModifier)
+                QApplication.sendEvent(self.combo_box, key_event)
+            elif encoder2_value == -1:
+                key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Up, Qt.KeyboardModifier.NoModifier)
+                QApplication.sendEvent(self.combo_box, key_event)
+
+            if self.gpio.read_button_2() and not self.button2_action_pending:
+                key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_F4, Qt.KeyboardModifier.NoModifier)
+                QApplication.sendEvent(self.combo_box, key_event)
+                self.button2_action_pending = True
+            elif not self.gpio.read_button_2():
+                self.button2_action_pending = False
 
     def update_selection(self):
         # Update UI based on current_index
