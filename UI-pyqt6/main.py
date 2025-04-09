@@ -9,6 +9,8 @@ import serial
 from time import sleep
 import time
 
+sat_freq = {"AO-91": 435.250, "SO-50": 436.795, "PO-101": 145.9, "LILACSAT-2": 437.2, "IO-86": 435.88, "ISS": 437.8, "HADES-R (SO-124)": 436.885, "AO-123": 435.4}
+
 # Add the relative path (this might work in some cases)
 sys.path.append('../sgp4')
 
@@ -224,6 +226,8 @@ class MainWindow(QMainWindow):
         self.process = None
         self.process_running = False
         self.auto_track_process = multiprocessing.Process
+        self.tracking_active = False
+        self.tracked_satellite = None
 
         et = pytz.timezone("US/Eastern")
         local_time = datetime.datetime.now(et)
@@ -431,6 +435,7 @@ class MainWindow(QMainWindow):
                 pass
             elif event.key() == Qt.Key.Key_F7:
                 #print("Starting Process")
+                self.tracked_satellite = self.satellites[self.combo_box.currentIndex()]
                 self.auto_track_process = multiprocessing.Process(target=self.auto_tracking)
                 self.auto_track_process.start()
                 #self.auto_track.emit()
@@ -439,6 +444,15 @@ class MainWindow(QMainWindow):
                 self.showFullScreen()
             elif event.key() == Qt.Key.Key_F9:
                 self.showMaximized()
+
+            elif event.key() == Qt.Key.Key_F1:
+                
+                if sat_freq.count(self.satellites[self.combo_box.currentIndex()].name) > 0:
+                    self.radio_process =  subprocess.Popen(['python3', '../radio/GNU Radio/Autocorrelation Voice Squelch/HAM/fm_rx.py', f"{sat_freq[self.combo_box.currentIndex().name]}"],
+                                   stdin=None,
+                                   stdout=None,
+                                   stderr=None)
+            
         
         # Pass the event to the default event filter
         return super().eventFilter(obj, event)
@@ -669,15 +683,15 @@ class MainWindow(QMainWindow):
                 key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Up, Qt.KeyboardModifier.NoModifier)
                 QApplication.sendEvent(self.combo_box, key_event)
 
-            if self.gpio.read_button_2(): # and not self.button2_action_pending:
-                if self.expanded_list == False:
-                    key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_F4, Qt.KeyboardModifier.NoModifier)
-                QApplication.sendEvent(self.combo_box, key_event)
-                self.button2_action_pending = True
-            elif not self.gpio.read_button_2():
-                self.button2_action_pending = False
-        elif self.expanded_list:
-            key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_F4, Qt.KeyboardModifier.NoModifier)
+        if self.gpio.read_button_2(): # and not self.button2_action_pending:
+            if self.expanded_list == False:
+                key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_F4, Qt.KeyboardModifier.NoModifier)
+            QApplication.sendEvent(self.combo_box, key_event)
+            self.button2_action_pending = True
+        elif not self.gpio.read_button_2():
+            self.button2_action_pending = False
+        #elif self.expanded_list:
+            #key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_F4, Qt.KeyboardModifier.NoModifier)
 
     def update_selection(self):
         # Update UI based on current_index
@@ -716,6 +730,7 @@ class MainWindow(QMainWindow):
             if self.auto_flag:
                 if self.button_action_pending == False:
                     print(f"Auto Mode Integration")
+                    self.tracked_satellite = self.satellites[self.combo_box.currentIndex()]
                     self.auto_track_process = multiprocessing.Process(target=self.auto_tracking)
                     self.auto_track_process.start()
                     self.button_action_pending = True
@@ -724,8 +739,6 @@ class MainWindow(QMainWindow):
 
                     if self.gpio.read_button() == True:
                         self.button_action_process.terminate()
-
-
 
             elif self.manual_flag:
                 if self.button_action_pending == False:  # Prevent repeated actions
@@ -737,30 +750,27 @@ class MainWindow(QMainWindow):
             self.button_action_pending = False
 
     def sat_data(self, satellites, selected, observer, local_time):
-        print("sat data")
-        # Get data from the satellite object
-        
-        e2_data = satellites[selected].getAngleFrom(observer, local_time)
-        
-        e3_data = satellites[selected].nextOverhead(observer, local_time)
-        e4_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e3_data)
-        
-        # e4_data = satellites[selected].getAngleFrom(observer, local_time)
 
-        #e5_data = str(observer.lat) + " , " + str(observer.lon) + " , " + str(observer.alt)
-        e5_data = f"Lat: {observer.lat:.2f}, Lon: {observer.lon:.2f}, Alt: {observer.alt:.2f}"
-        
-        # String formatting for displaying results
-        #e1_data = "AZ: " + str(e1_data[0]) + " , " + "EL: " + str(e1_data[1])
-        e2_data = f"Azimuth: {e2_data[0]:.2f}, Elevation: {e2_data[1]:.2f}"
+        # Prioritize showing the tracked satellite information if it exists
+        if self.tracked_satellite is not None:
+            index = self.satellites.index(self.tracked_satellite)
+            e1_data = satellites[index].name
+            e2_data = satellites[index].getAngleFrom(observer, local_time)
+            e3_data = satellites[index].nextOverhead(observer, local_time)
+            e4_data = satellites[index].overheadDuration(observer, local_time, next_overhead=e3_data)
+
+        else:
+            e1_data = satellites[selected].name
+            e2_data = satellites[selected].getAngleFrom(observer, local_time)
+            e3_data = satellites[selected].nextOverhead(observer, local_time)
+            e4_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e3_data)
+            
         e3_data = e3_data.astimezone(pytz.timezone('US/Eastern')).strftime("%Y-%m-%d %H:%M:%S")
-        #e3_data = str(e3_data)
         e4_data = f"Minutes : {e4_data[0]}, Seconds: {e4_data[1]}"
-        #e4_data = str("-1")
-        # e5_data = str(e5_data)
-        
+        e5_data = f"Lat: {observer.lat:.2f}, Lon: {observer.lon:.2f}, Alt: {observer.alt:.2f}"
+
         # Pass satellite data into text boxes
-        self.e1.setText("Satellite")
+        self.e1.setText(e1_data)
         self.e2.setText(e2_data)
         self.e3.setText(e3_data)
         self.e4.setText(e4_data)
@@ -795,12 +805,10 @@ class MainWindow(QMainWindow):
         for satellite in self.satellites:
             satellite.isOverhead(self.observer, utc_time)
 
-        #sat_labels = [f"{sat.name:20} | {overhead:10} " for sat in self.satellites]
-        sat_labels = [f"{sat.name:20} | " if not sat.overhead else f"{sat.name:20} |     Overhead " for sat in self.satellites]
+        overhead_text = "Overhead"
+        sat_labels = [f"{sat.name:20} | " if not sat.overhead else f"{sat.name:<20} | {overhead_text:^20}" for sat in self.satellites]
         for i, text in enumerate(sat_labels):
             self.combo_box.setItemText(i, text)
-
-
 
     def reread_data(self, signum=None, frame=None):
 
@@ -810,9 +818,6 @@ class MainWindow(QMainWindow):
             self.observer = Observer(file_path="../bluetooth/gps.data")
             
             self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
-
-
-
 
     def auto_tracking(self):
         """
@@ -838,6 +843,7 @@ class MainWindow(QMainWindow):
                     self.ser.write(string.encode())
                 else:
                     print(f"Satellite {satellite.name} is not overhead at {current_time}", file=file)
+                    self.tracked_satellite = None
                     break
 
                 sleep(5)
