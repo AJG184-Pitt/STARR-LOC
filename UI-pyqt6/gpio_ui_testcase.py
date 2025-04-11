@@ -8,6 +8,9 @@ import os
 import serial
 from time import sleep
 import time
+from cProfile import Profile
+from pstats import SortKey, Stats
+import pstats
 
 # Add the relative path (this might work in some cases)
 sys.path.append('../sgp4')
@@ -962,7 +965,27 @@ def main():
     window.auto_track.connect(window.auto_tracking)
     window.show()
 
-    sys.exit(app.exec())
+    # Profile the app execution
+    with Profile() as profile:
+        app.exec()  # Without sys.exit so code continues
+                
+    # Create the stats object
+    stats = Stats(profile)
+    stats.strip_dirs()
+    stats.sort_stats(SortKey.CALLS)
+    
+    # Print stats to console
+    stats.print_stats()
+    
+    with open("profile_results.txt", "w") as f:
+        ps = pstats.Stats(profile, stream=f)
+        ps.strip_dirs()
+        ps.sort_stats(SortKey.CALLS)
+        ps.print_stats()
+    
+    print("Profile results saved to profile_results.prof")
+    
+    sys.exit(0)
 
 if __name__ == '__main__':
     main()

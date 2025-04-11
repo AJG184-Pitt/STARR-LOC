@@ -21,7 +21,7 @@ from observer import Observer
 from satellite import Satellite
 import pytz, datetime
 
-import subprocess
+import subprocess, multiprocessing
 
 class CustomComboBox(QComboBox):
     """
@@ -67,7 +67,7 @@ class CustomComboBox(QComboBox):
 
     def keyPressEvent(self, event):
         # Ignore keys when no modifiers are pressed, but propagate to parent
-        if event.key() in (Qt.Key.Key_M, Qt.Key.Key_N, Qt.Key.Key_B, Qt.Key.Key_J, Qt.Key.Key_K, Qt.Key.Key_L) and not event.modifiers():
+        if event.key() in (Qt.Key.Key_M, Qt.Key.Key_N, Qt.Key.Key_B, Qt.Key.Key_W, Qt.Key.Key_A, Qt.Key.Key_S, Qt.Key.Key_D, Qt.Key.Key_F) and not event.modifiers():
             event.ignore()
             return
         return super().keyPressEvent(event)
@@ -79,9 +79,9 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.ser = Serial('/dev/ttyUSB0', 115200, timeout=1)
-        self.ser.rts = False
-        self.ser.dtr = False
+        # self.ser = Serial('/dev/ttyUSB0', 115200, timeout=1)
+        # self.ser.rts = False
+        # self.ser.dtr = False
 
         # Information gathering
         self.tle_file_path = "../bluetooth/tle.data"
@@ -99,6 +99,8 @@ class MainWindow(QMainWindow):
         self.process = None
         self.process_running = False
         self.auto_track_process = multiprocessing.Process
+        self.tracking_active = False
+        self.tracked_satellite = None
                 
         et = pytz.timezone("US/Eastern")
         local_time = datetime.datetime.now(et)
@@ -237,6 +239,23 @@ class MainWindow(QMainWindow):
         self.bluetooth_flag = False
         self.radio_flag = False
 
+        # Temp code for testing
+        self.step_amount = 0
+
+        # Automatic mode flag
+        self.auto_toggle_active = False
+
+        # Refresh data timer
+        self.data_timer = QTimer(self)
+        self.data_timer.timeout.connect(self.quick_data)
+        self.data_timer.start(5000)
+
+        self.reread_data()
+
+        options = [f"{sat.name:20} | " if not sat.overhead else f"{sat.name:20} |     Overhead " for sat in self.satellites]
+        self.combo_box.clear()
+        self.combo_box.addItems(options)
+
     def eventFilter(self, obj, event):
         # Check if the event is a key press event
         if event.type() == QEvent.Type.KeyPress:
@@ -244,7 +263,7 @@ class MainWindow(QMainWindow):
             if event.key() == Qt.Key.Key_B:
                 # Only process if in auto mode
                 if self.auto_flag:
-                    print("Automatic Mode: On")               
+                    print("Automatic Mode: On")
                     # Return True to indicate the event has been handled
                     return True
 
@@ -260,6 +279,23 @@ class MainWindow(QMainWindow):
                     print(f"Example Step: {self.step_amount}")
                     self.step_amount += 1
                     return True
+            elif event.key() == Qt.Key.Key_F5:
+                self.startBluetoothServer()
+            elif event.key() == Qt.Key.Key_F6:
+                self.tracked_satellite = None
+                self.auto_track_process.terminate()
+                self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
+            elif event.key() == Qt.Key.Key_F7:
+                #print("Starting Process")
+                self.tracked_satellite = self.satellites[self.combo_box.currentIndex()]
+                self.auto_track_process = multiprocessing.Process(target=self.auto_tracking)
+                self.auto_track_process.start()
+                #self.auto_track.emit()
+                pass
+            elif event.key() == Qt.Key.Key_F8:
+                self.showFullScreen()
+            elif event.key() == Qt.Key.Key_F9:
+                self.showMaximized()
         
         # Pass the event to the default event filter
         return super().eventFilter(obj, event)
@@ -517,7 +553,7 @@ class MainWindow(QMainWindow):
         e5_data = f"Lat: {observer.lat:.2f}, Lon: {observer.lon:.2f}, Alt: {observer.alt:.2f}"
         
         # String formatting for displaying results
-        e2_data = f"Azimuth: {e2_data[0]:.2f}, Elevation: {e2_data[1]:.2f}"
+        e2_data = f"Azimuth: {e2_data[0][0]:.2f}, Elevation: {e2_data[1][0]:.2f}"
         e3_data = e3_data.astimezone(pytz.timezone('US/Eastern')).strftime("%Y-%m-%d %H:%M:%S")
         e4_data = f"Minutes: {e4_data[0]}, Seconds: {e4_data[1]}"
         # e4_data = str("-1")
@@ -529,6 +565,86 @@ class MainWindow(QMainWindow):
         self.e3.setText(e3_data)
         self.e4.setText(e4_data)
         self.e5.setText(e5_data)
+
+    def startBluetoothServer(self):
+        
+        if not self.process_running:
+            self.process_running = True
+            self.process = subprocess.Popen(['python3', '../bluetooth/btserver.py'],
+                                   stdin=None,
+                                   stdout=None,
+                                   stderr=None)
+            
+            self.process.wait()
+            print("Bluetooth server returned to main loop")
+            self.process_running = False
+
+            self.reread_data()
+
+    def quick_data(self):
+        print("quick data")
+        
+        time = datetime.datetime.now(pytz.timezone("US/Eastern"))
+        utc_time = time.astimezone(pytz.utc)
+        #self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, utc_time)
+
+        if self.tracked_satellite is not None:
+            index = self.satellites.index(self.tracked_satellite)
+            print(self.tracked_satellite)
+        else:
+            index = self.combo_box.currentIndex()
+            print("No tracked satellite")
+
+        e2_data = self.satellites[index].getAngleFrom(self.observer, utc_time)
+        e2_data = f"Azimuth: {e2_data[0][0]:.2f}, Elevation: {e2_data[1][0]:.2f}"
+        self.e2.setText(e2_data)
+
+        for satellite in self.satellites:
+            satellite.isOverhead(self.observer, utc_time)
+
+        #sat_labels = [f"{sat.name:20} | {overhead:10} " for sat in self.satellites]
+        sat_labels = [f"{sat.name:20} | " if not sat.overhead else f"{sat.name:20} |     Overhead " for sat in self.satellites]
+        for i, text in enumerate(sat_labels):
+            self.combo_box.setItemText(i, text)
+
+    def reread_data(self, signum=None, frame=None):
+
+            print("rereading data")
+            self.tle_data = sgpb.read_tle_file("../bluetooth/tle.data")
+            self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
+            self.observer = Observer(file_path="../bluetooth/gps.data")
+            
+            self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
+
+    def auto_tracking(self):
+        """
+        Auto tracking loop
+        """
+        satellite = self.satellites[self.combo_box.currentIndex()]
+
+        with open("auto_tracking_doc.txt", "a") as file:
+
+            while (1):
+                # Get the current time
+                current_time = datetime.datetime.now(pytz.timezone("US/Eastern"))
+                current_time = current_time.astimezone(pytz.utc)
+
+                # Get the satellite position and angle
+                angle = satellite.getAngleFrom(self.observer, current_time)
+                # Check if the satellite is overhead
+                if angle[1] > 0: 
+                    print(f"Satellite {satellite.name} is overhead at {current_time}", file=file)
+                    print(f"{angle[0]=} & {angle[1]=}", file=file)
+                    # Send motor command to ESP32
+                    string = f"{angle[0]:.4f} {angle[1]:.4f} 0"
+                    self.ser.write(string.encode())
+                else:
+                    print(f"Satellite {satellite.name} is not overhead at {current_time}", file=file)
+                    self.tracked_satellite = None
+                    self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
+                    break
+
+                sleep(5)
 
 def main():
     app = QApplication(sys.argv)
