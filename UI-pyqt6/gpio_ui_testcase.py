@@ -1,8 +1,5 @@
 from PyQt6.QtGui import QPixmap, QKeyEvent
-from PyQt6.QtGui import QPixmap, QKeyEvent
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QComboBox,
-                            QLineEdit, QLabel, QGridLayout, QWidget)
-from PyQt6.QtCore import Qt, pyqtSignal, QEvent, QTimer
                             QLineEdit, QLabel, QGridLayout, QWidget)
 from PyQt6.QtCore import Qt, pyqtSignal, QEvent, QTimer
 
@@ -11,8 +8,9 @@ import os
 import serial
 from time import sleep
 import time
-
-sat_freq = {"AO-91": 435.250, "SO-50": 436.795, "PO-101": 145.9, "LILACSAT-2": 437.2, "IO-86": 435.88, "ISS": 437.8, "HADES-R (SO-124)": 436.885, "AO-123": 435.4}
+from cProfile import Profile
+from pstats import SortKey, Stats
+import pstats
 
 # Add the relative path (this might work in some cases)
 sys.path.append('../sgp4')
@@ -81,6 +79,8 @@ class GpioSetup():
         self.prev_CLK_state_2 = GPIO.input(self.CLK_PIN_2)
 
     def read_encoder(self):
+        start_time = time.perf_counter()
+        
         # Read the current state of the first rotary encoder's CLK pin
         CLK_state = GPIO.input(self.CLK_PIN)
 
@@ -100,9 +100,16 @@ class GpioSetup():
 
         # Save last CLK state
         self.prev_CLK_state = CLK_state
+
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("read_encoder in gpio class", duration_ms)
+
         return pulse_difference
     
     def read_encoder_2(self):
+        start_time = time.perf_counter()
+        
         # Read the current state of the second rotary encoder's CLK pin
         CLK_state_2 = GPIO.input(self.CLK_PIN_2)
 
@@ -122,9 +129,16 @@ class GpioSetup():
 
         # Save last CLK state
         self.prev_CLK_state_2 = CLK_state_2
+
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("read_encoder 2 in gpio class", duration_ms)
+
         return pulse_difference
         
     def read_button(self):
+        start_time = time.perf_counter()
+        
         # State change detection for the first button
         button_state = GPIO.input(self.SW_PIN)
         if button_state != self.prev_button_state:
@@ -135,9 +149,16 @@ class GpioSetup():
                 self.button_pressed = False
 
         self.prev_button_state = button_state
+
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("read_encoder_button in gpio class", duration_ms)
+
         return self.button_pressed
     
     def read_button_2(self):
+        start_time = time.perf_counter()
+        
         # State change detection for the second button
         button_state_2 = GPIO.input(self.SW_PIN_2)
         if button_state_2 != self.prev_button_state_2:
@@ -148,8 +169,12 @@ class GpioSetup():
                 self.button_pressed_2 = False
 
         self.prev_button_state_2 = button_state_2
+
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("read_encoder_button 2 in gpio class", duration_ms)
+
         return self.button_pressed_2
-  
 
 class CustomComboBox(QComboBox):
     """
@@ -229,9 +254,6 @@ class MainWindow(QMainWindow):
 
         self.process = None
         self.process_running = False
-        self.auto_track_process = multiprocessing.Process
-        self.tracking_active = False
-        self.tracked_satellite = None
         self.tracked_satellite = None
 
         et = pytz.timezone("US/Eastern")
@@ -244,9 +266,7 @@ class MainWindow(QMainWindow):
 
         # Create central widget and layout
         self.central_widget = QWidget()
-        self.central_widget = QWidget()
         background_image = "Assets/star_background"
-        self.central_widget.setStyleSheet(f"""
         self.central_widget.setStyleSheet(f"""
             QWidget {{
                 background-image: url({background_image});            
@@ -260,7 +280,6 @@ class MainWindow(QMainWindow):
         
         # Sort list based on distance
         self.satellites = sorted(self.satellites, key=lambda sat: sat.getAngleFrom(self.observer, local_time)[2])
-        self.satellites = sorted(self.satellites, key=lambda sat: sat.getAngleFrom(self.observer, local_time)[2])
         
         # Create custom combo box and populate it
         self.combo_box = CustomComboBox()
@@ -271,7 +290,6 @@ class MainWindow(QMainWindow):
         
         # Call method for selected satellite
         self.combo_box.currentIndexChanged.connect(
-            lambda: self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, local_time)
             lambda: self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, local_time)
         )
 
@@ -285,20 +303,17 @@ class MainWindow(QMainWindow):
 
         # Create interactable icons
         self.auto_image = QLabel(self.central_widget)
-        self.auto_image = QLabel(self.central_widget)
         self.auto_image.setGeometry(10, 400, 64, 64)
         pixmap1 = QPixmap('Assets/auto.png')
         pixmap1 = pixmap1.scaled(64, 64)
         self.auto_image.setPixmap(pixmap1)
 
         self.manual_image = QLabel(self.central_widget)
-        self.manual_image = QLabel(self.central_widget)
         self.manual_image.setGeometry(100, 400, 64, 64)
         pixmap2 = QPixmap('Assets/manual.png')
         pixmap2 = pixmap2.scaled(64, 64)
         self.manual_image.setPixmap(pixmap2)
 
-        self.bluetooth_image = QLabel(self.central_widget)
         self.bluetooth_image = QLabel(self.central_widget)
         self.bluetooth_image.setGeometry(190, 400, 48, 64)
         pixmap3 = QPixmap('Assets/bluetooth.png')
@@ -382,7 +397,7 @@ class MainWindow(QMainWindow):
 
         # Initialize gpio class object
         self.gpio = GpioSetup()
-        self.selected_labels = [0, 1, 2, 3]
+        self.selected_labels = [0, 1, 2, 3, 4]
         self.current_index = 0
 
         # Encoder checks
@@ -419,15 +434,15 @@ class MainWindow(QMainWindow):
         self.combo_box.clear()
         self.combo_box.addItems(options)
 
-
     def eventFilter(self, obj, event):
+        start_time = time.perf_counter()
+        
         # Check if the event is a key press event
         if event.type() == QEvent.Type.KeyPress:
             # Check for Z key specifically
             if event.key() == Qt.Key.Key_B:
                 # Only process if in auto mode
                 if self.auto_flag:
-                    print("Automatic Mode: On")
                     print("Automatic Mode: On")
                     # Return True to indicate the event has been handled
                     return True
@@ -462,14 +477,9 @@ class MainWindow(QMainWindow):
             elif event.key() == Qt.Key.Key_F9:
                 self.showMaximized()
 
-            elif event.key() == Qt.Key.Key_F1:
-                
-                if sat_freq.count(self.satellites[self.combo_box.currentIndex()].name) > 0:
-                    self.radio_process =  subprocess.Popen(['python3', '../radio/GNU Radio/Autocorrelation Voice Squelch/HAM/fm_rx.py', f"{sat_freq[self.combo_box.currentIndex().name]}"],
-                                   stdin=None,
-                                   stdout=None,
-                                   stderr=None)
-            
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("event filter", duration_ms)
         
         # Pass the event to the default event filter
         return super().eventFilter(obj, event)
@@ -514,6 +524,8 @@ class MainWindow(QMainWindow):
         super().keyPressEvent(event)
 
     def setDropdownSelected(self):
+        start_time = time.perf_counter()
+        
         index = self.combo_box.currentIndex()
         self.combo_box.setCurrentIndex(index)
         self.combo_box.setStyleSheet("""
@@ -554,8 +566,14 @@ class MainWindow(QMainWindow):
         self.auto_image.setStyleSheet("")
         self.bluetooth_image.setStyleSheet("")
         self.radio_image.setStyleSheet("")
+
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("drop down icon", duration_ms)
         
     def setManualIconSelected(self):
+        start_time = time.perf_counter()
+        
         self.manual_image.setStyleSheet("border: 2px solid yellow")
         self.auto_image.setStyleSheet("")
         self.combo_box.setStyleSheet("""
@@ -595,7 +613,13 @@ class MainWindow(QMainWindow):
         self.bluetooth_image.setStyleSheet("")
         self.radio_image.setStyleSheet("")
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("manual icon", duration_ms)
+
     def setAutoIconSelected(self):
+        start_time = time.perf_counter()
+        
         self.auto_image.setStyleSheet("border: 2px solid yellow")
         self.manual_image.setStyleSheet("")
         self.combo_box.setStyleSheet("""
@@ -635,7 +659,13 @@ class MainWindow(QMainWindow):
         self.bluetooth_image.setStyleSheet("")
         self.radio_image.setStyleSheet("")
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("auto icon", duration_ms)
+
     def setBluetoothIcon(self):
+        start_time = time.perf_counter()
+        
         self.auto_image.setStyleSheet("")
         self.manual_image.setStyleSheet("")
         self.combo_box.setStyleSheet("""
@@ -675,7 +705,13 @@ class MainWindow(QMainWindow):
         self.bluetooth_image.setStyleSheet("border: 2px solid yellow")
         self.radio_image.setStyleSheet("")
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("bluetooth icon", duration_ms)
+
     def setRadioSelected(self):
+        start_time = time.perf_counter()
+        
         self.auto_image.setStyleSheet("")
         self.manual_image.setStyleSheet("")
         self.combo_box.setStyleSheet("""
@@ -715,8 +751,9 @@ class MainWindow(QMainWindow):
         self.bluetooth_image.setStyleSheet("")
         self.radio_image.setStyleSheet("border: 2px solid yellow")
 
-    def setBluetoothIconSelected(self):
-        return 0
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("radio icon", duration_ms)
 
     def manual_encoder_control(self):
         """
@@ -725,6 +762,9 @@ class MainWindow(QMainWindow):
         
         Designed to be called directly when the button is pressed.
         """
+
+        start_time = time.perf_counter()
+
         # Flags to track state
         counter1 = 0
         counter2 = 0
@@ -782,8 +822,14 @@ class MainWindow(QMainWindow):
                 
                 time.sleep(0.01)  # Small delay to prevent CPU hogging
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("manual encoder control", duration_ms)
+
     def update_current_index(self):
 
+        start_time = time.perf_counter()
+        
         previous_index = self.current_index
         # Update current index based on encoder value
         self.encode = self.gpio.read_encoder()
@@ -796,7 +842,13 @@ class MainWindow(QMainWindow):
         if previous_index != self.current_index:
             self.update_selection()
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("update current index", duration_ms)
+
     def update_second_encoder(self):
+        start_time = time.perf_counter()
+        
         if self.combo_selected:
             encoder2_value = self.gpio.read_encoder_2()
             if encoder2_value == 1:
@@ -806,15 +858,6 @@ class MainWindow(QMainWindow):
                 key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_Up, Qt.KeyboardModifier.NoModifier)
                 QApplication.sendEvent(self.combo_box, key_event)
 
-        if self.gpio.read_button_2(): # and not self.button2_action_pending:
-            if self.expanded_list == False:
-                key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_F4, Qt.KeyboardModifier.NoModifier)
-            QApplication.sendEvent(self.combo_box, key_event)
-            self.button2_action_pending = True
-        elif not self.gpio.read_button_2():
-            self.button2_action_pending = False
-        #elif self.expanded_list:
-            #key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_F4, Qt.KeyboardModifier.NoModifier)
         if self.gpio.read_button_2(): # and not self.button2_action_pending:
             if not self.expanded_list:
                 self.combo_box.showPopup()
@@ -827,6 +870,9 @@ class MainWindow(QMainWindow):
 
             print("Button 2 pressed")
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("update second encoder", duration_ms)
 
     def update_selection(self):
         # Update UI based on current_index
@@ -835,27 +881,40 @@ class MainWindow(QMainWindow):
             self.combo_selected = False
             self.manual_flag = False
             self.bluetooth_selected = False
+            self.radio_flag = False
             self.setAutoIconSelected()
         elif self.current_index == 1:
             self.auto_flag = False
             self.combo_selected = True
             self.manual_flag = False
             self.bluetooth_selected = False
+            self.radio_flag = False
             self.setDropdownSelected()
         elif self.current_index == 2:
             self.auto_flaπ = False
             self.combo_selected = False
             self.manual_flag = True
             self.bluetooth_selected = False
+            self.radio_flag = False
             self.setManualIconSelected()
         elif self.current_index == 3:
             self.auto_flag = False
             self.combo_selected = False
             self.manual_flag = False
-        self.bluetooth_selected = True
-        self.setBluetoothIconSelected()
+            self.bluetooth_selected = True
+            self.radio_flag = False
+            self.setBluetoothIcon()
+        elif self.current_index == 4:
+            self.auto_flag = False
+            self.combo_selected = False
+            self.manual_flag = False
+            self.bluetooth_selected = False
+            self.radio_flag = True
+            self.setRadioSelected()
 
     def update_button_1(self):
+        start_time = time.perf_counter()
+        
         # First update encoder position
         self.update_current_index()
         
@@ -866,17 +925,10 @@ class MainWindow(QMainWindow):
                 if self.button_action_pending == False and self.tracked_satellite is None:
                     print(f"Auto Mode Integration")
                     self.tracked_satellite = self.satellites[self.combo_box.currentIndex()]
-                    self.tracked_satellite = self.satellites[self.combo_box.currentIndex()]
 
                     self.auto_track_process = multiprocessing.Process(target=self.auto_tracking)
                     self.auto_track_process.start()
                     self.button_action_pending = True
-
-                    time.sleep(5)
-
-                    if self.gpio.read_button() == True:
-                        self.button_action_process.terminate()
-
                     sleep(1)
 
 
@@ -886,54 +938,42 @@ class MainWindow(QMainWindow):
                     self.auto_track_process.terminate()
                     sleep(1)
 
-
             elif self.manual_flag:
                 if self.button_action_pending == False:  # Prevent repeated actions
                     print("Manual mode pending integration")
                     self.manual_encoder_control()
                     self.button_action_pending = True
+
+            elif self.bluetooth_flag:
+                if self.button_action_pending == False:
+                    self.startBluetoothServer()
         else:
             # Button is released
             self.button_action_pending = False
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("update button 1", duration_ms)
+
     def sat_data(self, satellites, selected, observer, local_time):
+        start_time = time.perf_counter()
+        
+        # Get data from the satellite object
+        e2_data = satellites[selected].getAngleFrom(observer, local_time)
+        
+        e3_data = satellites[selected].nextOverhead(observer, local_time)
+        e4_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e3_data)
+        
+        # e4_data = satellites[selected].getAngleFrom(observer, local_time)
 
-        # Prioritize showing the tracked satellite information if it exists
-        if self.tracked_satellite is not None:
-            index = self.satellites.index(self.tracked_satellite)
-            e1_data = satellites[index].name
-            e2_data = satellites[index].getAngleFrom(observer, local_time)
-            e3_data = satellites[index].nextOverhead(observer, local_time)
-            e4_data = satellites[index].overheadDuration(observer, local_time, next_overhead=e3_data)
-
-        else:
-            e1_data = satellites[selected].name
-            e2_data = satellites[selected].getAngleFrom(observer, local_time)
-            e3_data = satellites[selected].nextOverhead(observer, local_time)
-            e4_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e3_data)
-            
-
-        if self.tracked_satellite is not None:
-            index = self.satellites.index(self.tracked_satellite)
-            e1_data = satellites[index].name
-            e2_data = satellites[index].getAngleFrom(observer, local_time)
-            e3_data = satellites[index].nextOverhead(observer, local_time)
-            e4_data = satellites[index].overheadDuration(observer, local_time, next_overhead=e3_data)
-
-        else:
-            e1_data = satellites[selected].name
-            e2_data = satellites[selected].getAngleFrom(observer, local_time)
-            e3_data = satellites[selected].nextOverhead(observer, local_time)
-            e4_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e3_data)
-
-
-
+        e5_data = f"Lat: {observer.lat:.2f}, Lon: {observer.lon:.2f}, Alt: {observer.alt:.2f}"
+        
+        # String formatting for displaying results
         e2_data = f"Azimuth: {e2_data[0]:.2f}, Elevation: {e2_data[1]:.2f}"
         e3_data = e3_data.astimezone(pytz.timezone('US/Eastern')).strftime("%Y-%m-%d %H:%M:%S")
-        e4_data = f"Minutes : {e4_data[0]}, Seconds: {e4_data[1]}"
-        e5_data = f"Lat: {observer.lat:.2f}, Lon: {observer.lon:.2f}, Alt: {observer.alt:.2f}"
-
-        e5_data = f"Lat: {observer.lat:.2f}, Lon: {observer.lon:.2f}, Alt: {observer.alt:.2f}"
+        e4_data = f"Minutes: {e4_data[0]}, Seconds: {e4_data[1]}"
+        # e4_data = str("-1")
+        # e5_data = str(e5_data)
         
         # Pass satellite data into text boxes
         self.e1.setText("Satellite")
@@ -942,8 +982,13 @@ class MainWindow(QMainWindow):
         self.e4.setText(e4_data)
         self.e5.setText(e5_data)
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("sat_data", duration_ms)
+
     def startBluetoothServer(self):
-        
+        start_time = time.perf_counter()
+
         if not self.process_running:
             self.process_running = True
             self.process = subprocess.Popen(['python3', '../bluetooth/btserver.py'],
@@ -957,11 +1002,15 @@ class MainWindow(QMainWindow):
 
             self.reread_data()
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("bluetooth server", duration_ms)
+
     def quick_data(self):
-        print("quick data")
-        
-        time = datetime.datetime.now(pytz.timezone("US/Eastern"))
-        utc_time = time.astimezone(pytz.utc)
+        start_time = time.perf_counter()
+
+        current_time = datetime.datetime.now(pytz.timezone("US/Eastern"))
+        utc_time = current_time.astimezone(pytz.utc)
         #self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, utc_time)
 
         if self.tracked_satellite is not None:
@@ -978,13 +1027,18 @@ class MainWindow(QMainWindow):
         for satellite in self.satellites:
             satellite.isOverhead(self.observer, utc_time)
 
-        overhead_text = "Overhead"
-        sat_labels = [f"{sat.name:20} | " if not sat.overhead else f"{sat.name:<20} | {overhead_text:^20}" for sat in self.satellites]
+        #sat_labels = [f"{sat.name:20} | {overhead:10} " for sat in self.satellites]
+        sat_labels = [f"{sat.name:20} | " if not sat.overhead else f"{sat.name:20} |     Overhead " for sat in self.satellites]
         for i, text in enumerate(sat_labels):
             self.combo_box.setItemText(i, text)
 
-    def reread_data(self, signum=None, frame=None):
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("quick_data", duration_ms)
 
+    def reread_data(self, signum=None, frame=None):
+            start_time = time.perf_counter()
+            
             print("rereading data")
             self.tle_data = sgpb.read_tle_file("../bluetooth/tle.data")
             self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
@@ -992,10 +1046,17 @@ class MainWindow(QMainWindow):
             
             self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
 
+            end_time = time.perf_counter()
+            duration_ms = (end_time - start_time) * 1000
+            log_timing("rereading data", duration_ms)
+
     def auto_tracking(self):
         """
         Auto tracking loop
         """
+
+        start_time = time.perf_counter()
+
         satellite = self.satellites[self.combo_box.currentIndex()]
 
         with open("auto_tracking_doc.txt", "a") as file:
@@ -1017,24 +1078,29 @@ class MainWindow(QMainWindow):
                 else:
                     print(f"Satellite {satellite.name} is not overhead at {current_time}", file=file)
                     self.tracked_satellite = None
-                    self.tracked_satellite = None
                     self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
                     break
 
                 sleep(5)
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("auto tracking", duration_ms)
+
+def log_timing(method_name, duration_ms):
+    """Log timing information to a file"""
+    with open("gpio_ui_timing_log.txt", "a") as f:
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+        f.write(f"{timestamp} - {method_name}: {duration_ms:.2f}ms\n")
 
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
     
     window.auto_track.connect(window.auto_tracking)
-    
-    window.auto_track.connect(window.auto_tracking)
     window.show()
 
     sys.exit(app.exec())
-
 
 if __name__ == '__main__':
     main()
