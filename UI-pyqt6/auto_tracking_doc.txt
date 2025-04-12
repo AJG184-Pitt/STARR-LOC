@@ -1019,3 +1019,115 @@ Satellite Lapan A3 is overhead at 2025-04-10 23:29:49.782810+00:00
 angle[0]=np.float64(318.4393410733151) & angle[1]=np.float64(12.86775312340821)
 Satellite Lapan A3 is overhead at 2025-04-10 23:29:54.784739+00:00
 angle[0]=np.float64(319.34060016146674) & angle[1]=np.float64(12.368435903922135)
+Satellite CO-55 is overhead at 2025-04-12 22:18:36.824384+00:00
+angle[0]=np.float64(66.33570215926733) & angle[1]=np.float64(44.37774434213951)
+Satellite CO-55 is overhead at 2025-04-12 22:18:41.827522+00:00
+angle[0]=np.float64(63.60506431135012) & angle[1]=np.float64(44.24444029153036)
+Satellite CO-55 is overhead at 2025-04-12 22:18:46.829618+00:00
+angle[0]=np.float64(60.90389550629976) & angle[1]=np.float64(44.04033040860269)
+Satellite CO-55 is overhead at 2025-04-12 22:18:51.830710+00:00
+angle[0]=np.float64(58.24353188528122) & angle[1]=np.float64(43.76792756566663)
+Satellite CO-55 is overhead at 2025-04-12 22:18:56.832661+00:00
+angle[0]=np.float64(55.634248714502135) & angle[1]=np.float64(43.43049838346619)
+Satellite CO-55 is overhead at 2025-04-12 22:19:01.833794+00:00
+angle[0]=np.float64(53.085129679104796) & angle[1]=np.float64(43.03188214859222)
+Satellite CO-55 is overhead at 2025-04-12 22:19:06.835802+00:00
+angle[0]=np.float64(50.60385479488985) & angle[1]=np.float64(42.576454737539265)
+Satellite CO-55 is overhead at 2025-04-12 22:19:11.837810+00:00
+angle[0]=np.float64(48.196721576454614) & angle[1]=np.float64(42.06892068095694)
+Satellite CO-55 is overhead at 2025-04-12 22:19:16.838938+00:00
+angle[0]=np.float64(45.86861493657812) & angle[1]=np.float64(41.51421998360179)
+Satellite CO-55 is overhead at 2025-04-12 22:19:21.840928+00:00
+angle[0]=np.float64(43.62302526029278) & angle[1]=np.float64(40.91742962082169)
+Satellite CO-55 is overhead at 2025-04-12 22:19:26.842838+00:00
+angle[0]=np.float64(41.46222558587205) & angle[1]=np.float64(40.28359755440622)
+Satellite CO-55 is overhead at 2025-04-12 22:19:31.843913+00:00
+angle[0]=np.float64(39.38735485987989) & angle[1]=np.float64(39.617680701401675)
+Satellite CO-55 is overhead at 2025-04-12 22:19:36.845904+00:00
+angle[0]=np.float64(37.39852209027813) & angle[1]=np.float64(38.924484665147375)
+Satellite CO-55 is overhead at 2025-04-12 22:19:41.846985+00:00
+angle[0]=np.float64(35.49505172126708) & angle[1]=np.float64(38.20854932988885)
+Satellite CO-55 is overhead at 2025-04-12 22:19:46.848925+00:00
+angle[0]=np.float64(33.675511357096525) & angle[1]=np.float64(37.4741653854691)
+Satellite CO-55 is overhead at 2025-04-12 22:19:51.850849+00:00
+angle[0]=np.float64(31.93795432525581) & angle[1]=np.float64(36.72529129290538)
+Satellite CO-55 is overhead at 2025-04-12 22:19:56.851933+00:00
+angle[0]=np.float64(30.28000017063464) & angle[1]=np.float64(35.96555968645699)
+Satellite CO-55 is overhead at 2025-04-12 22:20:01.853885+00:00
+angle[0]=np.float64(28.69890175761779) & angle[1]=np.float64(35.19828642384888)
+Satellite CO-55 is overhead at 2025-04-12 22:20:06.854943+00:00
+angle[0]=np.float64(27.191746457599628) & angle[1]=np.float64(34.42643179183885)
+Satellite CO-55 is overhead at 2025-04-12 22:20:11.856891+00:00
+angle[0]=np.float64(25.75541807163745) & angle[1]=np.float64(33.65265454916716)
+Satellite CO-55 is overhead at 2025-04-12 22:20:16.858877+00:00
+angle[0]=np.float64(24.38676730900171) & angle[1]=np.float64(32.87928887204463)
+Satellite CO-55 is overhead at 2025-04-12 22:20:21.860799+00:00
+angle[0]=np.float64(23.08261173644898) & angle[1]=np.float64(32.108381910754645)
+Satellite CO-55 is overhead at 2025-04-12 22:20:26.862727+00:00
+angle[0]=np.float64(21.839787624767023) & angle[1]=np.float64(31.341710464293687)
+Satellite CO-55 is overhead at 2025-04-12 22:20:31.863794+00:00
+angle[0]=np.float64(20.655203305353563) & angle[1]=np.float64(30.580797077828233)
+Satellite CO-55 is overhead at 2025-04-12 22:20:36.865693+00:00
+angle[0]=np.float64(19.5258095805569) & angle[1]=np.float64(29.82694603894354)
+Satellite CO-55 is overhead at 2025-04-12 22:20:41.866757+00:00
+angle[0]=np.float64(18.44870869471582) & angle[1]=np.float64(29.081241957632553)
+Satellite CO-55 is overhead at 2025-04-12 22:20:46.868582+00:00
+angle[0]=np.float64(17.421068807525682) & angle[1]=np.float64(28.344594875073906)
+Satellite CO-55 is overhead at 2025-04-12 22:20:51.869680+00:00
+angle[0]=np.float64(16.44022440091352) & angle[1]=np.float64(27.617738877264987)
+Satellite CO-55 is overhead at 2025-04-12 22:20:56.871594+00:00
+angle[0]=np.float64(15.503594957011494) & angle[1]=np.float64(26.901269523283418)
+Satellite CO-55 is overhead at 2025-04-12 22:21:01.872665+00:00
+angle[0]=np.float64(14.608771390050725) & angle[1]=np.float64(26.195643998991844)
+Satellite CO-55 is overhead at 2025-04-12 22:21:06.874563+00:00
+angle[0]=np.float64(13.753430660578527) & angle[1]=np.float64(25.50121339256937)
+Satellite CO-55 is overhead at 2025-04-12 22:21:11.875627+00:00
+angle[0]=np.float64(12.935416318683753) & angle[1]=np.float64(24.818222308965478)
+Satellite CO-55 is overhead at 2025-04-12 22:21:16.877531+00:00
+angle[0]=np.float64(12.152655475611748) & angle[1]=np.float64(24.14683558005089)
+Satellite CO-55 is overhead at 2025-04-12 22:21:21.878598+00:00
+angle[0]=np.float64(11.403233857886299) & angle[1]=np.float64(23.48713752380066)
+Satellite CO-55 is overhead at 2025-04-12 22:21:26.880503+00:00
+angle[0]=np.float64(10.685310534444191) & angle[1]=np.float64(22.839154547230244)
+Satellite CO-55 is overhead at 2025-04-12 22:21:31.882487+00:00
+angle[0]=np.float64(9.99718276129603) & angle[1]=np.float64(22.202854540770776)
+Satellite CO-55 is overhead at 2025-04-12 22:21:36.884373+00:00
+angle[0]=np.float64(9.337243905787625) & angle[1]=np.float64(21.578160532947972)
+Satellite CO-55 is overhead at 2025-04-12 22:21:41.885460+00:00
+angle[0]=np.float64(8.703989520616283) & angle[1]=np.float64(20.96495657555262)
+Satellite CO-55 is overhead at 2025-04-12 22:21:46.887349+00:00
+angle[0]=np.float64(8.095983422905947) & angle[1]=np.float64(20.363097108708452)
+Satellite CO-55 is overhead at 2025-04-12 22:21:51.888418+00:00
+angle[0]=np.float64(7.511910801430148) & angle[1]=np.float64(19.772406591892935)
+Satellite CO-55 is overhead at 2025-04-12 22:21:56.890391+00:00
+angle[0]=np.float64(6.9505025154963365) & angle[1]=np.float64(19.192691452649893)
+Satellite CO-55 is overhead at 2025-04-12 22:22:01.891474+00:00
+angle[0]=np.float64(6.410603036139419) & angle[1]=np.float64(18.62373765890782)
+Satellite CO-55 is overhead at 2025-04-12 22:22:06.893359+00:00
+angle[0]=np.float64(5.891092236523439) & angle[1]=np.float64(18.06532075898769)
+Satellite CO-55 is overhead at 2025-04-12 22:22:11.894456+00:00
+angle[0]=np.float64(5.390950596760447) & angle[1]=np.float64(17.517203519706783)
+Satellite CO-55 is overhead at 2025-04-12 22:22:16.896376+00:00
+angle[0]=np.float64(4.909190268522402) & angle[1]=np.float64(16.979143455516297)
+Satellite CO-55 is overhead at 2025-04-12 22:22:21.897442+00:00
+angle[0]=np.float64(4.444912460577326) & angle[1]=np.float64(16.450891059299888)
+Satellite CO-55 is overhead at 2025-04-12 22:22:26.899322+00:00
+angle[0]=np.float64(3.9972428680589784) & angle[1]=np.float64(15.932195554049661)
+Satellite CO-55 is overhead at 2025-04-12 22:22:31.900388+00:00
+angle[0]=np.float64(3.5653884704788514) & angle[1]=np.float64(15.422803229523787)
+Satellite CO-55 is overhead at 2025-04-12 22:22:36.902396+00:00
+angle[0]=np.float64(3.148574138393288) & angle[1]=np.float64(14.922461926320752)
+Satellite CO-55 is overhead at 2025-04-12 22:22:41.904289+00:00
+angle[0]=np.float64(2.7460932799713285) & angle[1]=np.float64(14.430919735364728)
+Satellite CO-55 is overhead at 2025-04-12 22:22:46.906236+00:00
+angle[0]=np.float64(2.3572714057872117) & angle[1]=np.float64(13.947927538056728)
+Satellite CO-55 is overhead at 2025-04-12 22:22:51.907281+00:00
+angle[0]=np.float64(1.9814812064837355) & angle[1]=np.float64(13.473239187625175)
+Satellite CO-55 is overhead at 2025-04-12 22:22:56.909173+00:00
+angle[0]=np.float64(1.618111474146279) & angle[1]=np.float64(13.00661293679844)
+Satellite CO-55 is overhead at 2025-04-12 22:23:01.910267+00:00
+angle[0]=np.float64(1.2666102594083448) & angle[1]=np.float64(12.547810848113052)
+Satellite CO-55 is overhead at 2025-04-12 22:23:06.912150+00:00
+angle[0]=np.float64(0.9264338176998728) & angle[1]=np.float64(12.096600325389211)
+Satellite CO-55 is overhead at 2025-04-12 22:23:11.913196+00:00
+angle[0]=np.float64(0.597092150568798) & angle[1]=np.float64(11.652753619486496)
