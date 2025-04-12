@@ -2,7 +2,7 @@ from PyQt6.QtGui import QPixmap, QKeyEvent
 from PyQt6.QtGui import QPixmap, QKeyEvent
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QComboBox,
                             QLineEdit, QLabel, QGridLayout, QWidget)
-from PyQt6.QtCore import Qt, pyqtSignal, QEvent, QTimer
+from PyQt6.QtCore import (Qt, pyqtSignal, QEvent, QTimer,
                             QLineEdit, QLabel, QGridLayout, QWidget)
 from PyQt6.QtCore import Qt, pyqtSignal, QEvent, QTimer
 
@@ -247,7 +247,6 @@ class MainWindow(QMainWindow):
         self.central_widget = QWidget()
         background_image = "Assets/star_background"
         self.central_widget.setStyleSheet(f"""
-        self.central_widget.setStyleSheet(f"""
             QWidget {{
                 background-image: url({background_image});            
                 background-repeat: no-repeat;
@@ -271,7 +270,6 @@ class MainWindow(QMainWindow):
         
         # Call method for selected satellite
         self.combo_box.currentIndexChanged.connect(
-            lambda: self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, local_time)
             lambda: self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, local_time)
         )
 
