@@ -850,7 +850,7 @@ class MainWindow(QMainWindow):
                     print(f"Satellite {satellite.name} is overhead at {current_time}", file=file)
                     print(f"{angle[0]=} & {angle[1]=}", file=file)
                     # Send motor command to ESP32
-                    string = f"{angle[0]:.4f} {angle[1]:.4f} 0"
+                    string = f"{angle[0]:.4f} {angle[1]:.4f} 5"
                     self.ser.write(string.encode())
                 else:
                     print(f"Satellite {satellite.name} is not overhead at {current_time}", file=file)
