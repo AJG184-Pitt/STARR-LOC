@@ -1089,7 +1089,7 @@ class MainWindow(QMainWindow):
 
 def log_timing(method_name, duration_ms):
     """Log timing information to a file"""
-    with open("main_ui_timing_log.txt", "a") as f:
+    with open("gpio_ui_timing_log.txt", "a") as f:
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         f.write(f"{timestamp} - {method_name}: {duration_ms:.2f}ms\n")
 
