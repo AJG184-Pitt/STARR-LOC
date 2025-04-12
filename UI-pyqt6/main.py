@@ -309,11 +309,17 @@ class MainWindow(QMainWindow):
         self.radio_image.setPixmap(pixmap4)
 
         # Labels for satellite information
-        self.label1 = QLabel("Current Angle:")
-        self.label2 = QLabel("Next Satellite Overhead Period:")
-        self.label3 = QLabel("Current Overhead Duration:")
-        self.label4 = QLabel("Max Angle:")
-        self.label5 = QLabel("GPS Location:")
+        self.label1 = QLabel("Satellite Name:")
+        self.label2 = QLabel("Current Angles to Satellite")
+        self.label3 = QLabel("Satellite will next be overhead:")
+        self.label4 = QLabel("Total Time Overhead:")
+        self.label5 = QLabel("Observer Location:")
+        self.label1.setStyleSheet("color: white;")
+        self.label2.setStyleSheet("color: white;")
+        self.label3.setStyleSheet("color: white;")
+        self.label4.setStyleSheet("color: white;")
+        self.label5.setStyleSheet("color: white;")
+
 
         edit_lines = [self.e1, self.e2, self.e3, self.e4, self.e5, self.e6]
 
@@ -379,7 +385,7 @@ class MainWindow(QMainWindow):
 
         # Initialize gpio class object
         self.gpio = GpioSetup()
-        self.selected_labels = [0, 1, 2, 3]
+        self.selected_labels = [0, 1, 2, 3, 4]
         self.current_index = 0
 
         # Encoder checks
@@ -878,7 +884,7 @@ class MainWindow(QMainWindow):
 
                     if self.gpio.read_button() == True:
                         self.tracked_satellite = None
-                        self.button_action_process.terminate()
+                        self.auto_track_process.terminate()
                     sleep(1)
 
 
@@ -886,7 +892,6 @@ class MainWindow(QMainWindow):
                     print("Auto mode Terminate")
                     self.tracked_satellite = None
                     self.auto_track_process.terminate()
-                    self.button_action_pending = True
                     sleep(1)
 
 
@@ -899,7 +904,6 @@ class MainWindow(QMainWindow):
             elif self.bluetooth_selected:
                 if self.button_action_pending == False:
                     self.startBluetoothServer()
-                    self.button_action_pending = True
 
             elif self.radio_flag and self.button_action_pending == False:
                 print("Radio mode pending integration")
@@ -909,7 +913,7 @@ class MainWindow(QMainWindow):
                                    stdin=None,
                                    stdout=None,
                                    stderr=None)
-                self.button_action_pending = True
+                    
         else:
             # Button is released
             self.button_action_pending = False
@@ -929,21 +933,6 @@ class MainWindow(QMainWindow):
             e2_data = satellites[selected].getAngleFrom(observer, local_time)
             e3_data = satellites[selected].nextOverhead(observer, local_time)
             e4_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e3_data)
-            
-
-        if self.tracked_satellite is not None:
-            index = self.satellites.index(self.tracked_satellite)
-            e1_data = satellites[index].name
-            e2_data = satellites[index].getAngleFrom(observer, local_time)
-            e3_data = satellites[index].nextOverhead(observer, local_time)
-            e4_data = satellites[index].overheadDuration(observer, local_time, next_overhead=e3_data)
-
-        else:
-            e1_data = satellites[selected].name
-            e2_data = satellites[selected].getAngleFrom(observer, local_time)
-            e3_data = satellites[selected].nextOverhead(observer, local_time)
-            e4_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e3_data)
-
 
 
         e2_data = f"Azimuth: {e2_data[0]:.2f}, Elevation: {e2_data[1]:.2f}"
@@ -951,10 +940,9 @@ class MainWindow(QMainWindow):
         e4_data = f"Minutes : {e4_data[0]}, Seconds: {e4_data[1]}"
         e5_data = f"Lat: {observer.lat:.2f}, Lon: {observer.lon:.2f}, Alt: {observer.alt:.2f}"
 
-        e5_data = f"Lat: {observer.lat:.2f}, Lon: {observer.lon:.2f}, Alt: {observer.alt:.2f}"
         
         # Pass satellite data into text boxes
-        self.e1.setText("Satellite")
+        self.e1.setText(e1_data)
         self.e2.setText(e2_data)
         self.e3.setText(e3_data)
         self.e4.setText(e4_data)
@@ -1001,6 +989,12 @@ class MainWindow(QMainWindow):
         for i, text in enumerate(sat_labels):
             self.combo_box.setItemText(i, text)
 
+        if self.tracked_satellite is not None:
+            e4_data = self.satellites[index].overheadDuration(self.observer, utc_time)
+            e4_data = f"Minutes : {e4_data[0]}, Seconds: {e4_data[1]}"
+            self.e4.setText(e4_data)
+        
+
     def reread_data(self, signum=None, frame=None):
 
             print("rereading data")
@@ -1015,6 +1009,9 @@ class MainWindow(QMainWindow):
         Auto tracking loop
         """
         satellite = self.satellites[self.combo_box.currentIndex()]
+        angle = satellite.getAngleFrom(self.observer, current_time)
+        if angle[1] > 0:
+            self.label4.setText("Time Remaining Overhead:")
 
         with open("auto_tracking_doc.txt", "a") as file:
 
@@ -1035,8 +1032,8 @@ class MainWindow(QMainWindow):
                 else:
                     print(f"Satellite {satellite.name} is not overhead at {current_time}", file=file)
                     self.tracked_satellite = None
-                    self.tracked_satellite = None
                     self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
+                    self.label4.setText("Total Time Overhead:")
                     break
 
                 sleep(5)
@@ -1045,8 +1042,6 @@ class MainWindow(QMainWindow):
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
-    
-    window.auto_track.connect(window.auto_tracking)
     
     window.auto_track.connect(window.auto_tracking)
     window.show()
