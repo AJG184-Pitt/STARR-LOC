@@ -260,6 +260,8 @@ class MainWindow(QMainWindow):
         self.combo_box.addItems(options)
 
     def eventFilter(self, obj, event):
+        start_time = time.perf_counter()
+        
         # Check if the event is a key press event
         if event.type() == QEvent.Type.KeyPress:
             # Check for Z key specifically
@@ -299,10 +301,14 @@ class MainWindow(QMainWindow):
                 self.showFullScreen()
             elif event.key() == Qt.Key.Key_F9:
                 self.showMaximized()
-        
+    
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        self.log_timing("eventFilter", duration_ms)
+
         # Pass the event to the default event filter
         return super().eventFilter(obj, event)
-    
+
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_A:
             self.auto_flag = True
@@ -343,6 +349,8 @@ class MainWindow(QMainWindow):
         super().keyPressEvent(event)
 
     def setDropdownSelected(self):
+        start_time = time.perf_counter()
+
         index = self.combo_box.currentIndex()
         self.combo_box.setCurrentIndex(index)
         self.combo_box.setStyleSheet("""
@@ -383,8 +391,14 @@ class MainWindow(QMainWindow):
         self.auto_image.setStyleSheet("")
         self.bluetooth_image.setStyleSheet("")
         self.radio_image.setStyleSheet("")
+
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        self.log_timing("drop down selected", duration_ms)
         
     def setManualIconSelected(self):
+        start_time = time.perf_counter()
+        
         self.manual_image.setStyleSheet("border: 2px solid yellow")
         self.auto_image.setStyleSheet("")
         self.combo_box.setStyleSheet("""
@@ -424,7 +438,13 @@ class MainWindow(QMainWindow):
         self.bluetooth_image.setStyleSheet("")
         self.radio_image.setStyleSheet("")
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        self.log_timing("manual icon", duration_ms)
+
     def setAutoIconSelected(self):
+        start_time = time.perf_counter()
+        
         self.auto_image.setStyleSheet("border: 2px solid yellow")
         self.manual_image.setStyleSheet("")
         self.combo_box.setStyleSheet("""
@@ -464,7 +484,13 @@ class MainWindow(QMainWindow):
         self.bluetooth_image.setStyleSheet("")
         self.radio_image.setStyleSheet("")
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        self.log_timing("auto icon", duration_ms)
+
     def setBluetoothIcon(self):
+        start_time = time.perf_counter()
+        
         self.auto_image.setStyleSheet("")
         self.manual_image.setStyleSheet("")
         self.combo_box.setStyleSheet("""
@@ -504,7 +530,13 @@ class MainWindow(QMainWindow):
         self.bluetooth_image.setStyleSheet("border: 2px solid yellow")
         self.radio_image.setStyleSheet("")
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        self.log_timing("bluetooth icon", duration_ms)
+
     def setRadioSelected(self):
+        start_time = time.perf_counter()
+        
         self.auto_image.setStyleSheet("")
         self.manual_image.setStyleSheet("")
         self.combo_box.setStyleSheet("""
@@ -544,7 +576,13 @@ class MainWindow(QMainWindow):
         self.bluetooth_image.setStyleSheet("")
         self.radio_image.setStyleSheet("border: 2px solid yellow")
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        self.log_timing("radio icon", duration_ms)
+
     def sat_data(self, satellites, selected, observer, local_time):
+        start_time = time.perf_counter()
+        
         # Get data from the satellite object
         e2_data = satellites[selected].getAngleFrom(observer, local_time)
         
@@ -569,8 +607,13 @@ class MainWindow(QMainWindow):
         self.e4.setText(e4_data)
         self.e5.setText(e5_data)
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        self.log_timing("sat_data", duration_ms)
+
     def startBluetoothServer(self):
-        
+        start_time = time.perf_counter()
+
         if not self.process_running:
             self.process_running = True
             self.process = subprocess.Popen(['python3', '../bluetooth/btserver.py'],
@@ -584,11 +627,15 @@ class MainWindow(QMainWindow):
 
             self.reread_data()
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        self.log_timing("bluetooth server", duration_ms)
+
     def quick_data(self):
-        print("quick data")
+        start_time = time.perf_counter()
         
-        time = datetime.datetime.now(pytz.timezone("US/Eastern"))
-        utc_time = time.astimezone(pytz.utc)
+        current_time = datetime.datetime.now(pytz.timezone("US/Eastern"))
+        utc_time = current_time.astimezone(pytz.utc)
         #self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, utc_time)
 
         if self.tracked_satellite is not None:
@@ -610,8 +657,13 @@ class MainWindow(QMainWindow):
         for i, text in enumerate(sat_labels):
             self.combo_box.setItemText(i, text)
 
-    def reread_data(self, signum=None, frame=None):
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        self.log_timing("quick_data", duration_ms)
 
+    def reread_data(self, signum=None, frame=None):
+            start_time = time.perf_counter()
+            
             print("rereading data")
             self.tle_data = sgpb.read_tle_file("../bluetooth/tle.data")
             self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
@@ -619,10 +671,16 @@ class MainWindow(QMainWindow):
             
             self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
 
+            end_time = time.perf_counter()
+            duration_ms = (end_time - start_time) * 1000
+            self.log_timing("reread data", duration_ms)
+
     def auto_tracking(self):
         """
         Auto tracking loop
         """
+        start_time = time.perf_counter()
+
         satellite = self.satellites[self.combo_box.currentIndex()]
 
         with open("auto_tracking_doc.txt", "a") as file:
@@ -649,34 +707,23 @@ class MainWindow(QMainWindow):
 
                 sleep(5)
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        self.log_timing("auto tracking", duration_ms)
+
+    def log_timing(self, method_name, duration_ms):
+        """Log timing information to a file"""
+        with open("main_ui_timing_log.txt", "a") as f:
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+            f.write(f"{timestamp} - {method_name}: {duration_ms:.2f}ms\n")
+
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
     
     window.auto_track.connect(window.auto_tracking)
     window.show()
-
-    # Profile the app execution
-    with Profile() as profile:
-        app.exec()  # Without sys.exit so code continues
-                
-    # Create the stats object
-    stats = Stats(profile)
-    stats.strip_dirs()
-    stats.sort_stats(SortKey.CALLS)
-    
-    # Print stats to console
-    stats.print_stats()
-    
-    with open("profile_results.txt", "w") as f:
-        ps = pstats.Stats(profile, stream=f)
-        ps.strip_dirs()
-        ps.sort_stats(SortKey.CALLS)
-        ps.print_stats()
-    
-    print("Profile results saved to profile_results.prof")
-    
-    sys.exit(0)
+    sys.exit(app.exec())
 
 if __name__ == '__main__':
     main()

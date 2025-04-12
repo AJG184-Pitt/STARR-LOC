@@ -79,6 +79,8 @@ class GpioSetup():
         self.prev_CLK_state_2 = GPIO.input(self.CLK_PIN_2)
 
     def read_encoder(self):
+        start_time = time.perf_counter()
+        
         # Read the current state of the first rotary encoder's CLK pin
         CLK_state = GPIO.input(self.CLK_PIN)
 
@@ -98,9 +100,16 @@ class GpioSetup():
 
         # Save last CLK state
         self.prev_CLK_state = CLK_state
+
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("read_encoder in gpio class", duration_ms)
+
         return pulse_difference
     
     def read_encoder_2(self):
+        start_time = time.perf_counter()
+        
         # Read the current state of the second rotary encoder's CLK pin
         CLK_state_2 = GPIO.input(self.CLK_PIN_2)
 
@@ -120,9 +129,16 @@ class GpioSetup():
 
         # Save last CLK state
         self.prev_CLK_state_2 = CLK_state_2
+
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("read_encoder 2 in gpio class", duration_ms)
+
         return pulse_difference
         
     def read_button(self):
+        start_time = time.perf_counter()
+        
         # State change detection for the first button
         button_state = GPIO.input(self.SW_PIN)
         if button_state != self.prev_button_state:
@@ -133,9 +149,16 @@ class GpioSetup():
                 self.button_pressed = False
 
         self.prev_button_state = button_state
+
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("read_encoder_button in gpio class", duration_ms)
+
         return self.button_pressed
     
     def read_button_2(self):
+        start_time = time.perf_counter()
+        
         # State change detection for the second button
         button_state_2 = GPIO.input(self.SW_PIN_2)
         if button_state_2 != self.prev_button_state_2:
@@ -146,8 +169,12 @@ class GpioSetup():
                 self.button_pressed_2 = False
 
         self.prev_button_state_2 = button_state_2
+
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("read_encoder_button 2 in gpio class", duration_ms)
+
         return self.button_pressed_2
-  
 
 class CustomComboBox(QComboBox):
     """
@@ -408,6 +435,8 @@ class MainWindow(QMainWindow):
         self.combo_box.addItems(options)
 
     def eventFilter(self, obj, event):
+        start_time = time.perf_counter()
+        
         # Check if the event is a key press event
         if event.type() == QEvent.Type.KeyPress:
             # Check for Z key specifically
@@ -447,6 +476,10 @@ class MainWindow(QMainWindow):
                 self.showFullScreen()
             elif event.key() == Qt.Key.Key_F9:
                 self.showMaximized()
+
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("event filter", duration_ms)
         
         # Pass the event to the default event filter
         return super().eventFilter(obj, event)
@@ -491,6 +524,8 @@ class MainWindow(QMainWindow):
         super().keyPressEvent(event)
 
     def setDropdownSelected(self):
+        start_time = time.perf_counter()
+        
         index = self.combo_box.currentIndex()
         self.combo_box.setCurrentIndex(index)
         self.combo_box.setStyleSheet("""
@@ -531,8 +566,14 @@ class MainWindow(QMainWindow):
         self.auto_image.setStyleSheet("")
         self.bluetooth_image.setStyleSheet("")
         self.radio_image.setStyleSheet("")
+
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("drop down icon", duration_ms)
         
     def setManualIconSelected(self):
+        start_time = time.perf_counter()
+        
         self.manual_image.setStyleSheet("border: 2px solid yellow")
         self.auto_image.setStyleSheet("")
         self.combo_box.setStyleSheet("""
@@ -572,7 +613,13 @@ class MainWindow(QMainWindow):
         self.bluetooth_image.setStyleSheet("")
         self.radio_image.setStyleSheet("")
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("manual icon", duration_ms)
+
     def setAutoIconSelected(self):
+        start_time = time.perf_counter()
+        
         self.auto_image.setStyleSheet("border: 2px solid yellow")
         self.manual_image.setStyleSheet("")
         self.combo_box.setStyleSheet("""
@@ -612,7 +659,13 @@ class MainWindow(QMainWindow):
         self.bluetooth_image.setStyleSheet("")
         self.radio_image.setStyleSheet("")
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("auto icon", duration_ms)
+
     def setBluetoothIcon(self):
+        start_time = time.perf_counter()
+        
         self.auto_image.setStyleSheet("")
         self.manual_image.setStyleSheet("")
         self.combo_box.setStyleSheet("""
@@ -652,7 +705,13 @@ class MainWindow(QMainWindow):
         self.bluetooth_image.setStyleSheet("border: 2px solid yellow")
         self.radio_image.setStyleSheet("")
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("bluetooth icon", duration_ms)
+
     def setRadioSelected(self):
+        start_time = time.perf_counter()
+        
         self.auto_image.setStyleSheet("")
         self.manual_image.setStyleSheet("")
         self.combo_box.setStyleSheet("""
@@ -692,6 +751,10 @@ class MainWindow(QMainWindow):
         self.bluetooth_image.setStyleSheet("")
         self.radio_image.setStyleSheet("border: 2px solid yellow")
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("radio icon", duration_ms)
+
     def manual_encoder_control(self):
         """
         Toggle-able serial control method that sends encoder values over serial.
@@ -699,6 +762,9 @@ class MainWindow(QMainWindow):
         
         Designed to be called directly when the button is pressed.
         """
+
+        start_time = time.perf_counter()
+
         # Flags to track state
         counter1 = 0
         counter2 = 0
@@ -756,8 +822,14 @@ class MainWindow(QMainWindow):
                 
                 time.sleep(0.01)  # Small delay to prevent CPU hogging
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("manual encoder control", duration_ms)
+
     def update_current_index(self):
 
+        start_time = time.perf_counter()
+        
         previous_index = self.current_index
         # Update current index based on encoder value
         self.encode = self.gpio.read_encoder()
@@ -770,7 +842,13 @@ class MainWindow(QMainWindow):
         if previous_index != self.current_index:
             self.update_selection()
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("update current index", duration_ms)
+
     def update_second_encoder(self):
+        start_time = time.perf_counter()
+        
         if self.combo_selected:
             encoder2_value = self.gpio.read_encoder_2()
             if encoder2_value == 1:
@@ -792,6 +870,10 @@ class MainWindow(QMainWindow):
 
             print("Button 2 pressed")
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("update second encoder", duration_ms)
+
     def update_selection(self):
         # Update UI based on current_index
         if self.current_index == 0:
@@ -799,27 +881,40 @@ class MainWindow(QMainWindow):
             self.combo_selected = False
             self.manual_flag = False
             self.bluetooth_selected = False
+            self.radio_flag = False
             self.setAutoIconSelected()
         elif self.current_index == 1:
             self.auto_flag = False
             self.combo_selected = True
             self.manual_flag = False
             self.bluetooth_selected = False
+            self.radio_flag = False
             self.setDropdownSelected()
         elif self.current_index == 2:
             self.auto_flaπ = False
             self.combo_selected = False
             self.manual_flag = True
             self.bluetooth_selected = False
+            self.radio_flag = False
             self.setManualIconSelected()
         elif self.current_index == 3:
             self.auto_flag = False
             self.combo_selected = False
             self.manual_flag = False
-        self.bluetooth_selected = True
-        self.setBluetoothIconSelected()
+            self.bluetooth_selected = True
+            self.radio_flag = False
+            self.setBluetoothIcon()
+        elif self.current_index == 4:
+            self.auto_flag = False
+            self.combo_selected = False
+            self.manual_flag = False
+            self.bluetooth_selected = False
+            self.radio_flag = True
+            self.setRadioSelected()
 
     def update_button_1(self):
+        start_time = time.perf_counter()
+        
         # First update encoder position
         self.update_current_index()
         
@@ -843,17 +938,26 @@ class MainWindow(QMainWindow):
                     self.auto_track_process.terminate()
                     sleep(1)
 
-
             elif self.manual_flag:
                 if self.button_action_pending == False:  # Prevent repeated actions
                     print("Manual mode pending integration")
                     self.manual_encoder_control()
                     self.button_action_pending = True
+
+            elif self.bluetooth_flag:
+                if self.button_action_pending == False:
+                    self.startBluetoothServer()
         else:
             # Button is released
             self.button_action_pending = False
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("update button 1", duration_ms)
+
     def sat_data(self, satellites, selected, observer, local_time):
+        start_time = time.perf_counter()
+        
         # Get data from the satellite object
         e2_data = satellites[selected].getAngleFrom(observer, local_time)
         
@@ -878,8 +982,13 @@ class MainWindow(QMainWindow):
         self.e4.setText(e4_data)
         self.e5.setText(e5_data)
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("sat_data", duration_ms)
+
     def startBluetoothServer(self):
-        
+        start_time = time.perf_counter()
+
         if not self.process_running:
             self.process_running = True
             self.process = subprocess.Popen(['python3', '../bluetooth/btserver.py'],
@@ -893,11 +1002,15 @@ class MainWindow(QMainWindow):
 
             self.reread_data()
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("bluetooth server", duration_ms)
+
     def quick_data(self):
-        print("quick data")
-        
-        time = datetime.datetime.now(pytz.timezone("US/Eastern"))
-        utc_time = time.astimezone(pytz.utc)
+        start_time = time.perf_counter()
+
+        current_time = datetime.datetime.now(pytz.timezone("US/Eastern"))
+        utc_time = current_time.astimezone(pytz.utc)
         #self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, utc_time)
 
         if self.tracked_satellite is not None:
@@ -919,8 +1032,13 @@ class MainWindow(QMainWindow):
         for i, text in enumerate(sat_labels):
             self.combo_box.setItemText(i, text)
 
-    def reread_data(self, signum=None, frame=None):
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("quick_data", duration_ms)
 
+    def reread_data(self, signum=None, frame=None):
+            start_time = time.perf_counter()
+            
             print("rereading data")
             self.tle_data = sgpb.read_tle_file("../bluetooth/tle.data")
             self.satellites = [Satellite(name, tle1, tle2) for name, tle1, tle2 in self.tle_data]
@@ -928,10 +1046,17 @@ class MainWindow(QMainWindow):
             
             self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
 
+            end_time = time.perf_counter()
+            duration_ms = (end_time - start_time) * 1000
+            log_timing("rereading data", duration_ms)
+
     def auto_tracking(self):
         """
         Auto tracking loop
         """
+
+        start_time = time.perf_counter()
+
         satellite = self.satellites[self.combo_box.currentIndex()]
 
         with open("auto_tracking_doc.txt", "a") as file:
@@ -958,6 +1083,16 @@ class MainWindow(QMainWindow):
 
                 sleep(5)
 
+        end_time = time.perf_counter()
+        duration_ms = (end_time - start_time) * 1000
+        log_timing("auto tracking", duration_ms)
+
+def log_timing(method_name, duration_ms):
+    """Log timing information to a file"""
+    with open("main_ui_timing_log.txt", "a") as f:
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+        f.write(f"{timestamp} - {method_name}: {duration_ms:.2f}ms\n")
+
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
@@ -965,27 +1100,7 @@ def main():
     window.auto_track.connect(window.auto_tracking)
     window.show()
 
-    # Profile the app execution
-    with Profile() as profile:
-        app.exec()  # Without sys.exit so code continues
-                
-    # Create the stats object
-    stats = Stats(profile)
-    stats.strip_dirs()
-    stats.sort_stats(SortKey.CALLS)
-    
-    # Print stats to console
-    stats.print_stats()
-    
-    with open("profile_results.txt", "w") as f:
-        ps = pstats.Stats(profile, stream=f)
-        ps.strip_dirs()
-        ps.sort_stats(SortKey.CALLS)
-        ps.print_stats()
-    
-    print("Profile results saved to profile_results.prof")
-    
-    sys.exit(0)
+    sys.exit(app.exec())
 
 if __name__ == '__main__':
     main()
