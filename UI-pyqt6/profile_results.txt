@@ -1,0 +1,97 @@
+         413496 function calls in 11.625 seconds
+
+   Ordered by: call count
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+    42210    0.012    0.000    0.012    0.000 {method 'reshape' of 'numpy.ndarray' objects}
+    42210    0.008    0.000    0.008    0.000 {built-in method numpy.asanyarray}
+    24120    0.003    0.000    0.003    0.000 satellite.py:36(<genexpr>)
+    24120    0.002    0.000    0.002    0.000 shape_base.py:17(_atleast_1d_dispatcher)
+    24120    0.015    0.000    0.029    0.000 shape_base.py:21(atleast_1d)
+    24120    0.013    0.000    0.013    0.000 {built-in method numpy.array}
+    24120    0.002    0.000    0.002    0.000 {built-in method builtins.len}
+    18090    0.003    0.000    0.003    0.000 {method 'ravel' of 'numpy.ndarray' objects}
+    18090    0.001    0.000    0.001    0.000 {method 'append' of 'list' objects}
+    18090    0.008    0.000    0.008    0.000 {built-in method builtins.abs}
+    12060    0.002    0.000    0.002    0.000 {built-in method builtins.isinstance}
+     6030    0.001    0.000    0.001    0.000 multiarray.py:180(concatenate)
+     6030    0.012    0.000    0.013    0.000 sidereal.py:56(juliandate)
+     6030    0.079    0.000    0.079    0.000 ecef.py:366(uvw2enu)
+     6030    0.047    0.000    0.047    0.000 ecef.py:35(geodetic2ecef)
+     6030    0.041    0.000    0.049    0.000 enu.py:20(enu2aer)
+     6030    0.024    0.000    0.031    0.000 _shape_base_impl.py:621(column_stack)
+     6030    0.002    0.000    0.003    0.000 shape_base.py:208(_arrays_for_stack_dispatcher)
+     6030    0.002    0.000    0.005    0.000 _shape_base_impl.py:617(_column_stack_dispatcher)
+     6030    0.006    0.000    0.007    0.000 sidereal.py:92(greenwichsrt)
+     6030    0.016    0.000    0.142    0.000 ecef.py:273(ecef2enu)
+     6030    0.015    0.000    0.484    0.000 satellite.py:29(getAngleFrom)
+     6030    0.022    0.000    0.031    0.000 eci.py:134(R3)
+     6030    0.006    0.000    0.398    0.000 aer.py:168(eci2aer)
+     6030    0.069    0.000    0.196    0.000 eci.py:20(eci2ecef)
+     6030    0.005    0.000    0.196    0.000 aer.py:21(ecef2aer)
+     6030    0.004    0.000    0.067    0.000 satellite.py:22(getPosAtTime)
+     6030    0.006    0.000    0.006    0.000 functions.py:8(jday)
+     6030    0.010    0.000    0.063    0.000 sgp4_basic.py:6(sgp4_run)
+     6030    0.002    0.000    0.002    0.000 {built-in method numpy.empty}
+     6030    0.001    0.000    0.001    0.000 {built-in method builtins.hasattr}
+     6030    0.043    0.000    0.043    0.000 {built-in method twoline2rv}
+     6030    0.004    0.000    0.004    0.000 {method 'sgp4' of 'sgp4.vallado_cpp.Satrec' objects}
+     6026    0.010    0.000    0.493    0.000 satellite.py:42(isOverhead)
+      600    0.001    0.000    0.002    0.000 enum.py:688(__call__)
+      600    0.001    0.000    0.001    0.000 enum.py:1095(__new__)
+      595    0.002    0.000    0.005    0.000 main_testcase.py:262(eventFilter)
+      595    0.001    0.000    0.003    0.000 {built-in method type}
+      595    0.000    0.000    0.000    0.000 {function MainWindow.eventFilter at 0x0000020A1F1C79C0}
+      218    0.000    0.000    0.000    0.000 {built-in method setItemText}
+       62    0.000    0.000    0.000    0.000 {built-in method key}
+       25    2.376    0.095    2.376    0.095 {built-in method setStyleSheet}
+       12    0.001    0.000    0.001    0.000 {built-in method setText}
+        8    0.000    0.000    0.000    0.000 {method 'replace' of 'datetime.datetime' objects}
+        8    0.000    0.000    0.000    0.000 {method 'replace' of 'str' objects}
+        7    0.000    0.000    0.014    0.002 main_testcase.py:71(keyPressEvent)
+        6    0.000    0.000    0.000    0.000 {method 'get' of 'dict' objects}
+        5    0.000    0.000    2.376    0.475 main_testcase.py:306(keyPressEvent)
+        5    0.000    0.000    0.000    0.000 enum.py:1504(__bool__)
+        5    0.000    0.000    0.000    0.000 {built-in method currentIndex}
+        5    0.000    0.000    0.000    0.000 {function MainWindow.keyPressEvent at 0x0000020A1F1C7A60}
+        5    0.000    0.000    0.000    0.000 {built-in method ignore}
+        5    0.000    0.000    0.000    0.000 {built-in method modifiers}
+        4    0.000    0.000    0.000    0.000 __init__.py:130(timezone)
+        4    0.000    0.000    0.000    0.000 tzinfo.py:399(utcoffset)
+        4    0.000    0.000    0.000    0.000 __init__.py:201(_case_insensitive_zone_lookup)
+        4    0.000    0.000    0.000    0.000 __init__.py:47(ascii)
+        4    0.000    0.000    0.000    0.000 __init__.py:236(dst)
+        4    0.000    0.000    0.000    0.000 __init__.py:193(_unmunge_zone)
+        4    0.000    0.000    0.000    0.000 tzinfo.py:196(fromutc)
+        4    0.000    0.000    0.000    0.000 {built-in method _bisect.bisect_right}
+        4    0.000    0.000    0.000    0.000 {method 'astimezone' of 'datetime.datetime' objects}
+        4    0.000    0.000    0.000    0.000 {method 'encode' of 'str' objects}
+        4    0.000    0.000    0.000    0.000 {method 'lower' of 'str' objects}
+        4    0.000    0.000    0.000    0.000 {method 'upper' of 'str' objects}
+        4    0.000    0.000    0.000    0.000 {built-in method builtins.getattr}
+        4    0.000    0.000    0.000    0.000 {built-in method builtins.max}
+        4    0.000    0.000    0.000    0.000 {built-in method builtins.print}
+        2    0.000    0.000    0.000    0.000 tzinfo.py:430(dst)
+        2    0.007    0.004    0.371    0.185 satellite.py:51(nextOverhead)
+        2    0.000    0.000    0.000    0.000 __init__.py:225(fromutc)
+        2    0.000    0.000    0.000    0.000 __init__.py:230(utcoffset)
+        2    0.002    0.001    0.113    0.057 satellite.py:65(overheadDuration)
+        2    0.000    0.000    0.000    0.000 main_testcase.py:609(<listcomp>)
+        2    0.000    0.000    0.485    0.242 main_testcase.py:141(<lambda>)
+        2    0.000    0.000    0.020    0.010 main_testcase.py:587(quick_data)
+        2    0.000    0.000    0.485    0.242 main_testcase.py:547(sat_data)
+        2    0.014    0.007    0.014    0.007 {function CustomComboBox.keyPressEvent at 0x0000020A1F115F80}
+        2    0.000    0.000    0.000    0.000 {function UTC.fromutc at 0x0000020A1F1449A0}
+        2    0.000    0.000    0.000    0.000 {built-in method now}
+        2    0.000    0.000    0.000    0.000 {method 'strftime' of 'datetime.date' objects}
+        2    0.000    0.000    0.000    0.000 {method 'total_seconds' of 'datetime.timedelta' objects}
+        2    0.000    0.000    0.000    0.000 {built-in method builtins.divmod}
+        1    0.000    0.000    0.000    0.000 cProfile.py:118(__exit__)
+        1    0.000    0.000    0.494    0.494 main_testcase.py:345(setDropdownSelected)
+        1    0.000    0.000    0.471    0.471 main_testcase.py:387(setManualIconSelected)
+        1    0.000    0.000    0.467    0.467 main_testcase.py:427(setAutoIconSelected)
+        1    0.000    0.000    0.465    0.465 main_testcase.py:467(setBluetoothIcon)
+        1    0.000    0.000    0.480    0.480 main_testcase.py:507(setRadioSelected)
+        1    8.725    8.725   11.625   11.625 {built-in method exec}
+        1    0.000    0.000    0.000    0.000 {built-in method setCurrentIndex}
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}

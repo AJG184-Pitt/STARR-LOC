@@ -1,0 +1,188 @@
+10a11,13
+> from cProfile import Profile
+> from pstats import SortKey, Stats
+> import pstats
+78a82,83
+>         start_time = time.perf_counter()
+>         
+97a103,107
+> 
+>         end_time = time.perf_counter()
+>         duration_ms = (end_time - start_time) * 1000
+>         log_timing("read_encoder in gpio class", duration_ms)
+> 
+100a111,112
+>         start_time = time.perf_counter()
+>         
+119a132,136
+> 
+>         end_time = time.perf_counter()
+>         duration_ms = (end_time - start_time) * 1000
+>         log_timing("read_encoder 2 in gpio class", duration_ms)
+> 
+122a140,141
+>         start_time = time.perf_counter()
+>         
+132a152,156
+> 
+>         end_time = time.perf_counter()
+>         duration_ms = (end_time - start_time) * 1000
+>         log_timing("read_encoder_button in gpio class", duration_ms)
+> 
+135a160,161
+>         start_time = time.perf_counter()
+>         
+145a172,176
+> 
+>         end_time = time.perf_counter()
+>         duration_ms = (end_time - start_time) * 1000
+>         log_timing("read_encoder_button 2 in gpio class", duration_ms)
+> 
+147d177
+<   
+407a438,439
+>         start_time = time.perf_counter()
+>         
+446a479,482
+> 
+>         end_time = time.perf_counter()
+>         duration_ms = (end_time - start_time) * 1000
+>         log_timing("event filter", duration_ms)
+490a527,528
+>         start_time = time.perf_counter()
+>         
+530a569,572
+> 
+>         end_time = time.perf_counter()
+>         duration_ms = (end_time - start_time) * 1000
+>         log_timing("drop down icon", duration_ms)
+532a575,576
+>         start_time = time.perf_counter()
+>         
+571a616,619
+>         end_time = time.perf_counter()
+>         duration_ms = (end_time - start_time) * 1000
+>         log_timing("manual icon", duration_ms)
+> 
+572a621,622
+>         start_time = time.perf_counter()
+>         
+611a662,665
+>         end_time = time.perf_counter()
+>         duration_ms = (end_time - start_time) * 1000
+>         log_timing("auto icon", duration_ms)
+> 
+612a667,668
+>         start_time = time.perf_counter()
+>         
+651a708,711
+>         end_time = time.perf_counter()
+>         duration_ms = (end_time - start_time) * 1000
+>         log_timing("bluetooth icon", duration_ms)
+> 
+652a713,714
+>         start_time = time.perf_counter()
+>         
+691a754,757
+>         end_time = time.perf_counter()
+>         duration_ms = (end_time - start_time) * 1000
+>         log_timing("radio icon", duration_ms)
+> 
+698a765,767
+> 
+>         start_time = time.perf_counter()
+> 
+755a825,828
+>         end_time = time.perf_counter()
+>         duration_ms = (end_time - start_time) * 1000
+>         log_timing("manual encoder control", duration_ms)
+> 
+757a831,832
+>         start_time = time.perf_counter()
+>         
+769a845,848
+>         end_time = time.perf_counter()
+>         duration_ms = (end_time - start_time) * 1000
+>         log_timing("update current index", duration_ms)
+> 
+770a850,851
+>         start_time = time.perf_counter()
+>         
+791a873,876
+>         end_time = time.perf_counter()
+>         duration_ms = (end_time - start_time) * 1000
+>         log_timing("update second encoder", duration_ms)
+> 
+830a916,917
+>         start_time = time.perf_counter()
+>         
+854d940
+< 
+859a946,949
+> 
+>             elif self.bluetooth_flag:
+>                 if self.button_action_pending == False:
+>                     self.startBluetoothServer()
+863a954,957
+>         end_time = time.perf_counter()
+>         duration_ms = (end_time - start_time) * 1000
+>         log_timing("update button 1", duration_ms)
+> 
+864a959,960
+>         start_time = time.perf_counter()
+>         
+888a985,988
+>         end_time = time.perf_counter()
+>         duration_ms = (end_time - start_time) * 1000
+>         log_timing("sat_data", duration_ms)
+> 
+890c990,991
+<         
+---
+>         start_time = time.perf_counter()
+> 
+903a1005,1008
+>         end_time = time.perf_counter()
+>         duration_ms = (end_time - start_time) * 1000
+>         log_timing("bluetooth server", duration_ms)
+> 
+905,908c1010,1013
+<         print("quick data")
+<         
+<         time = datetime.datetime.now(pytz.timezone("US/Eastern"))
+<         utc_time = time.astimezone(pytz.utc)
+---
+>         start_time = time.perf_counter()
+> 
+>         current_time = datetime.datetime.now(pytz.timezone("US/Eastern"))
+>         utc_time = current_time.astimezone(pytz.utc)
+930c1035,1037
+<     def reread_data(self, signum=None, frame=None):
+---
+>         end_time = time.perf_counter()
+>         duration_ms = (end_time - start_time) * 1000
+>         log_timing("quick_data", duration_ms)
+931a1039,1041
+>     def reread_data(self, signum=None, frame=None):
+>             start_time = time.perf_counter()
+>             
+938a1049,1052
+>             end_time = time.perf_counter()
+>             duration_ms = (end_time - start_time) * 1000
+>             log_timing("rereading data", duration_ms)
+> 
+942a1057,1059
+> 
+>         start_time = time.perf_counter()
+> 
+967a1085,1094
+> 
+>         end_time = time.perf_counter()
+>         duration_ms = (end_time - start_time) * 1000
+>         log_timing("auto tracking", duration_ms)
+> 
+> def log_timing(method_name, duration_ms):
+>     """Log timing information to a file"""
+>     with open("gpio_ui_timing_log.txt", "a") as f:
+>         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+>         f.write(f"{timestamp} - {method_name}: {duration_ms:.2f}ms\n")

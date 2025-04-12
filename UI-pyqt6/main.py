@@ -1,5 +1,8 @@
 from PyQt6.QtGui import QPixmap, QKeyEvent
+from PyQt6.QtGui import QPixmap, QKeyEvent
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QComboBox,
+                            QLineEdit, QLabel, QGridLayout, QWidget)
+from PyQt6.QtCore import (Qt, pyqtSignal, QEvent, QTimer,
                             QLineEdit, QLabel, QGridLayout, QWidget)
 from PyQt6.QtCore import Qt, pyqtSignal, QEvent, QTimer
 
@@ -8,6 +11,8 @@ import os
 import serial
 from time import sleep
 import time
+
+sat_freq = {"AO-91": 435.250, "SO-50": 436.795, "PO-101": 145.9, "LILACSAT-2": 437.2, "IO-86": 435.88, "ISS": 437.8, "HADES-R (SO-124)": 436.885, "AO-123": 435.4}
 
 # Add the relative path (this might work in some cases)
 sys.path.append('../sgp4')
@@ -190,7 +195,7 @@ class CustomComboBox(QComboBox):
 
     def keyPressEvent(self, event):
         # Ignore keys when no modifiers are pressed, but propagate to parent
-        if event.key() in (Qt.Key.Key_M, Qt.Key.Key_N, Qt.Key.Key_B, Qt.Key.Key_J, Qt.Key.Key_K, Qt.Key.Key_L) and not event.modifiers():
+        if event.key() in (Qt.Key.Key_M, Qt.Key.Key_N, Qt.Key.Key_B, Qt.Key.Key_W, Qt.Key.Key_A, Qt.Key.Key_S, Qt.Key.Key_D, Qt.Key.Key_F) and not event.modifiers():
             event.ignore()
             return
         return super().keyPressEvent(event)
@@ -224,6 +229,9 @@ class MainWindow(QMainWindow):
 
         self.process = None
         self.process_running = False
+        self.auto_track_process = multiprocessing.Process
+        self.tracking_active = False
+        self.tracked_satellite = None
         self.tracked_satellite = None
 
         et = pytz.timezone("US/Eastern")
@@ -235,6 +243,7 @@ class MainWindow(QMainWindow):
         self.setFixedSize(800, 480)
 
         # Create central widget and layout
+        self.central_widget = QWidget()
         self.central_widget = QWidget()
         background_image = "Assets/star_background"
         self.central_widget.setStyleSheet(f"""
@@ -249,6 +258,7 @@ class MainWindow(QMainWindow):
     
         
         # Sort list based on distance
+        self.satellites = sorted(self.satellites, key=lambda sat: sat.getAngleFrom(self.observer, local_time)[2])
         self.satellites = sorted(self.satellites, key=lambda sat: sat.getAngleFrom(self.observer, local_time)[2])
         
         # Create custom combo box and populate it
@@ -273,11 +283,13 @@ class MainWindow(QMainWindow):
 
         # Create interactable icons
         self.auto_image = QLabel(self.central_widget)
+        self.auto_image = QLabel(self.central_widget)
         self.auto_image.setGeometry(10, 400, 64, 64)
         pixmap1 = QPixmap('Assets/auto.png')
         pixmap1 = pixmap1.scaled(64, 64)
         self.auto_image.setPixmap(pixmap1)
 
+        self.manual_image = QLabel(self.central_widget)
         self.manual_image = QLabel(self.central_widget)
         self.manual_image.setGeometry(100, 400, 64, 64)
         pixmap2 = QPixmap('Assets/manual.png')
@@ -285,10 +297,17 @@ class MainWindow(QMainWindow):
         self.manual_image.setPixmap(pixmap2)
 
         self.bluetooth_image = QLabel(self.central_widget)
+        self.bluetooth_image = QLabel(self.central_widget)
         self.bluetooth_image.setGeometry(190, 400, 48, 64)
         pixmap3 = QPixmap('Assets/bluetooth.png')
         pixmap3 = pixmap3.scaled(48, 64)
         self.bluetooth_image.setPixmap(pixmap3)
+
+        self.radio_image = QLabel(self.central_widget)
+        self.radio_image.setGeometry(280, 400, 32, 64)
+        pixmap4 = QPixmap('Assets/radio.png')
+        pixmap4 = pixmap4.scaled(32, 64)
+        self.radio_image.setPixmap(pixmap4)
 
         # Labels for satellite information
         self.label1 = QLabel("Current Angle:")
@@ -348,9 +367,6 @@ class MainWindow(QMainWindow):
         grid.addWidget(self.label5, 8, 1, alignment=Qt.AlignmentFlag.AlignBottom)
         grid.addWidget(self.e5, 9, 1)
 
-        # Example step counter for manual operation
-        self.step_amount = 0
-        
         # Install event filter on the window itself
         self.installEventFilter(self)
 
@@ -410,6 +426,7 @@ class MainWindow(QMainWindow):
                 # Only process if in auto mode
                 if self.auto_flag:
                     print("Automatic Mode: On")
+                    print("Automatic Mode: On")
                     # Return True to indicate the event has been handled
                     return True
 
@@ -442,27 +459,56 @@ class MainWindow(QMainWindow):
                 self.showFullScreen()
             elif event.key() == Qt.Key.Key_F9:
                 self.showMaximized()
+
+            elif event.key() == Qt.Key.Key_F1:
+                
+                if sat_freq.count(self.satellites[self.combo_box.currentIndex()].name) > 0:
+                    self.radio_process =  subprocess.Popen(['python3', '../radio/GNU Radio/Autocorrelation Voice Squelch/HAM/fm_rx.py', f"{sat_freq[self.combo_box.currentIndex().name]}"],
+                                   stdin=None,
+                                   stdout=None,
+                                   stderr=None)
+            
         
         # Pass the event to the default event filter
         return super().eventFilter(obj, event)
     
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key.Key_J:
-           self.auto_flag = True
-           self.combo_selected = False
-           self.manual_flag = False
-           self.setAutoIconSelected()
-        elif event.key() == Qt.Key.Key_K:
+        if event.key() == Qt.Key.Key_A:
+            self.auto_flag = True
+            self.combo_selected = False
+            self.manual_flag = False
+            self.bluetooth_flag = False
+            self.radio_flag = False
+            self.setAutoIconSelected()
+        elif event.key() == Qt.Key.Key_W:
             self.auto_flag = False
             self.combo_selected = True
             self.manual_flag = False
+            self.bluetooth_flag = False
+            self.radio_flag = False
             self.setDropdownSelected()
-        elif event.key() == Qt.Key.Key_L:
+        elif event.key() == Qt.Key.Key_S:
             self.auto_flag = False
             self.combo_selected = False
             self.manual_flag = True
+            self.bluetooth_flag = False
+            self.radio_flag = False
             self.setManualIconSelected()
-
+        elif event.key() == Qt.Key.Key_D:
+            self.auto_flag = False
+            self.combo_selected = False
+            self.manual_flag = False
+            self.bluetooth_flag = True
+            self.radio_flag = False
+            self.setBluetoothIcon()
+        elif event.key() == Qt.Key.Key_F:
+            self.auto_flag = False
+            self.combo_selected = False
+            self.manual_flag = False
+            self.bluetooth_flag = False
+            self.radio_flag = True
+            self.setRadioSelected()
+        
         super().keyPressEvent(event)
 
     def setDropdownSelected(self):
@@ -504,6 +550,8 @@ class MainWindow(QMainWindow):
         """)
         self.manual_image.setStyleSheet("")
         self.auto_image.setStyleSheet("")
+        self.bluetooth_image.setStyleSheet("")
+        self.radio_image.setStyleSheet("")
         
     def setManualIconSelected(self):
         self.manual_image.setStyleSheet("border: 2px solid yellow")
@@ -542,6 +590,8 @@ class MainWindow(QMainWindow):
                 border-radius: 3px;
             }
         """)
+        self.bluetooth_image.setStyleSheet("")
+        self.radio_image.setStyleSheet("")
 
     def setAutoIconSelected(self):
         self.auto_image.setStyleSheet("border: 2px solid yellow")
@@ -580,6 +630,88 @@ class MainWindow(QMainWindow):
                 border-radius: 3px;
             }
         """)
+        self.bluetooth_image.setStyleSheet("")
+        self.radio_image.setStyleSheet("")
+
+    def setBluetoothIcon(self):
+        self.auto_image.setStyleSheet("")
+        self.manual_image.setStyleSheet("")
+        self.combo_box.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #27a7d8;
+                border-radius: 5px;
+                padding: 1px 18px 1px 3px;
+                min-width: 6em;
+                color: white;
+                font-family: JetBrains Mono;
+                font-size: 14px;
+            }
+            
+            QComboBox::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 15px; /* Adjust as needed */
+                border-left-width: 1px;
+                border-left-color: darkgrey;
+                border-left-style: solid; 
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+                background-image: none; /* Remove default arrow */
+            }
+            
+            QComboBox::down-arrow {
+                border-image: url('Assets/drop-arrow');
+            }
+            
+            QComboBox QAbstractItemView {
+                background-color: grey; /* Dark grey for dropdown items */
+                color: white; /* Font color inside the dropdown */
+                border: 1px solid #27a7d8;
+                border-radius: 3px;
+            }
+        """)
+        self.bluetooth_image.setStyleSheet("border: 2px solid yellow")
+        self.radio_image.setStyleSheet("")
+
+    def setRadioSelected(self):
+        self.auto_image.setStyleSheet("")
+        self.manual_image.setStyleSheet("")
+        self.combo_box.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #27a7d8;
+                border-radius: 5px;
+                padding: 1px 18px 1px 3px;
+                min-width: 6em;
+                color: white;
+                font-family: JetBrains Mono;
+                font-size: 14px;
+            }
+            
+            QComboBox::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 15px; /* Adjust as needed */
+                border-left-width: 1px;
+                border-left-color: darkgrey;
+                border-left-style: solid; 
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+                background-image: none; /* Remove default arrow */
+            }
+            
+            QComboBox::down-arrow {
+                border-image: url('Assets/drop-arrow');
+            }
+            
+            QComboBox QAbstractItemView {
+                background-color: grey; /* Dark grey for dropdown items */
+                color: white; /* Font color inside the dropdown */
+                border: 1px solid #27a7d8;
+                border-radius: 3px;
+            }
+        """)
+        self.bluetooth_image.setStyleSheet("")
+        self.radio_image.setStyleSheet("border: 2px solid yellow")
 
     def setBluetoothIconSelected(self):
         return 0
@@ -673,6 +805,15 @@ class MainWindow(QMainWindow):
                 QApplication.sendEvent(self.combo_box, key_event)
 
         if self.gpio.read_button_2(): # and not self.button2_action_pending:
+            if self.expanded_list == False:
+                key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_F4, Qt.KeyboardModifier.NoModifier)
+            QApplication.sendEvent(self.combo_box, key_event)
+            self.button2_action_pending = True
+        elif not self.gpio.read_button_2():
+            self.button2_action_pending = False
+        #elif self.expanded_list:
+            #key_event = QKeyEvent(QEvent.Type.KeyPress, Qt.Key.Key_F4, Qt.KeyboardModifier.NoModifier)
+        if self.gpio.read_button_2(): # and not self.button2_action_pending:
             if not self.expanded_list:
                 self.combo_box.showPopup()
                 self.expanded_list = True
@@ -723,10 +864,17 @@ class MainWindow(QMainWindow):
                 if self.button_action_pending == False and self.tracked_satellite is None:
                     print(f"Auto Mode Integration")
                     self.tracked_satellite = self.satellites[self.combo_box.currentIndex()]
+                    self.tracked_satellite = self.satellites[self.combo_box.currentIndex()]
 
                     self.auto_track_process = multiprocessing.Process(target=self.auto_tracking)
                     self.auto_track_process.start()
                     self.button_action_pending = True
+
+                    time.sleep(5)
+
+                    if self.gpio.read_button() == True:
+                        self.button_action_process.terminate()
+
                     sleep(1)
 
 
@@ -748,6 +896,21 @@ class MainWindow(QMainWindow):
 
     def sat_data(self, satellites, selected, observer, local_time):
 
+        # Prioritize showing the tracked satellite information if it exists
+        if self.tracked_satellite is not None:
+            index = self.satellites.index(self.tracked_satellite)
+            e1_data = satellites[index].name
+            e2_data = satellites[index].getAngleFrom(observer, local_time)
+            e3_data = satellites[index].nextOverhead(observer, local_time)
+            e4_data = satellites[index].overheadDuration(observer, local_time, next_overhead=e3_data)
+
+        else:
+            e1_data = satellites[selected].name
+            e2_data = satellites[selected].getAngleFrom(observer, local_time)
+            e3_data = satellites[selected].nextOverhead(observer, local_time)
+            e4_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e3_data)
+            
+
         if self.tracked_satellite is not None:
             index = self.satellites.index(self.tracked_satellite)
             e1_data = satellites[index].name
@@ -767,9 +930,11 @@ class MainWindow(QMainWindow):
         e3_data = e3_data.astimezone(pytz.timezone('US/Eastern')).strftime("%Y-%m-%d %H:%M:%S")
         e4_data = f"Minutes : {e4_data[0]}, Seconds: {e4_data[1]}"
         e5_data = f"Lat: {observer.lat:.2f}, Lon: {observer.lon:.2f}, Alt: {observer.alt:.2f}"
+
+        e5_data = f"Lat: {observer.lat:.2f}, Lon: {observer.lon:.2f}, Alt: {observer.alt:.2f}"
         
         # Pass satellite data into text boxes
-        self.e1.setText(e1_data)
+        self.e1.setText("Satellite")
         self.e2.setText(e2_data)
         self.e3.setText(e3_data)
         self.e4.setText(e4_data)
@@ -811,12 +976,10 @@ class MainWindow(QMainWindow):
         for satellite in self.satellites:
             satellite.isOverhead(self.observer, utc_time)
 
-        #sat_labels = [f"{sat.name:20} | {overhead:10} " for sat in self.satellites]
-        sat_labels = [f"{sat.name:20} | " if not sat.overhead else f"{sat.name:20} |     Overhead " for sat in self.satellites]
+        overhead_text = "Overhead"
+        sat_labels = [f"{sat.name:20} | " if not sat.overhead else f"{sat.name:<20} | {overhead_text:^20}" for sat in self.satellites]
         for i, text in enumerate(sat_labels):
             self.combo_box.setItemText(i, text)
-
-
 
     def reread_data(self, signum=None, frame=None):
 
@@ -826,9 +989,6 @@ class MainWindow(QMainWindow):
             self.observer = Observer(file_path="../bluetooth/gps.data")
             
             self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
-
-
-
 
     def auto_tracking(self):
         """
@@ -855,6 +1015,7 @@ class MainWindow(QMainWindow):
                 else:
                     print(f"Satellite {satellite.name} is not overhead at {current_time}", file=file)
                     self.tracked_satellite = None
+                    self.tracked_satellite = None
                     self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
                     break
 
@@ -864,6 +1025,8 @@ class MainWindow(QMainWindow):
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
+    
+    window.auto_track.connect(window.auto_tracking)
     
     window.auto_track.connect(window.auto_tracking)
     window.show()
