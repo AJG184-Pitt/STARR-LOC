@@ -594,7 +594,7 @@ class MainWindow(QMainWindow):
         e5_data = f"Lat: {observer.lat:.2f}, Lon: {observer.lon:.2f}, Alt: {observer.alt:.2f}"
         
         # String formatting for displaying results
-        e2_data = f"Azimuth: {e2_data[0][0]:.2f}, Elevation: {e2_data[1][0]:.2f}"
+        e2_data = f"Azimuth: {e2_data[0]:.2f}, Elevation: {e2_data[1]:.2f}"
         e3_data = e3_data.astimezone(pytz.timezone('US/Eastern')).strftime("%Y-%m-%d %H:%M:%S")
         e4_data = f"Minutes: {e4_data[0]}, Seconds: {e4_data[1]}"
         # e4_data = str("-1")
@@ -646,7 +646,7 @@ class MainWindow(QMainWindow):
             print("No tracked satellite")
 
         e2_data = self.satellites[index].getAngleFrom(self.observer, utc_time)
-        e2_data = f"Azimuth: {e2_data[0][0]:.2f}, Elevation: {e2_data[1][0]:.2f}"
+        e2_data = f"Azimuth: {e2_data[0]:.2f}, Elevation: {e2_data[1]:.2f}"
         self.e2.setText(e2_data)
 
         for satellite in self.satellites:
