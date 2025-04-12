@@ -258,7 +258,6 @@ class MainWindow(QMainWindow):
         
         # Sort list based on distance
         self.satellites = sorted(self.satellites, key=lambda sat: sat.getAngleFrom(self.observer, local_time)[2])
-        self.satellites = sorted(self.satellites, key=lambda sat: sat.getAngleFrom(self.observer, local_time)[2])
         
         # Create custom combo box and populate it
         self.combo_box = CustomComboBox()
@@ -425,7 +424,6 @@ class MainWindow(QMainWindow):
                 # Only process if in auto mode
                 if self.auto_flag:
                     print("Automatic Mode: On")
-                    print("Automatic Mode: On")
                     # Return True to indicate the event has been handled
                     return True
 
@@ -448,12 +446,9 @@ class MainWindow(QMainWindow):
                 self.auto_track_process.terminate()
                 self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
             elif event.key() == Qt.Key.Key_F7:
-                #print("Starting Process")
                 self.tracked_satellite = self.satellites[self.combo_box.currentIndex()]
                 self.auto_track_process = multiprocessing.Process(target=self.auto_tracking)
                 self.auto_track_process.start()
-                #self.auto_track.emit()
-                pass
             elif event.key() == Qt.Key.Key_F8:
                 self.showFullScreen()
             elif event.key() == Qt.Key.Key_F9:
@@ -825,25 +820,36 @@ class MainWindow(QMainWindow):
             self.combo_selected = False
             self.manual_flag = False
             self.bluetooth_selected = False
+            self.radio_flag = False
             self.setAutoIconSelected()
         elif self.current_index == 1:
             self.auto_flag = False
             self.combo_selected = True
             self.manual_flag = False
             self.bluetooth_selected = False
+            self.radio_flag = False
             self.setDropdownSelected()
         elif self.current_index == 2:
             self.auto_flaπ = False
             self.combo_selected = False
             self.manual_flag = True
             self.bluetooth_selected = False
+            self.radio_flag = False
             self.setManualIconSelected()
         elif self.current_index == 3:
             self.auto_flag = False
             self.combo_selected = False
             self.manual_flag = False
-        self.bluetooth_selected = True
-        self.setBluetoothIconSelected()
+            self.bluetooth_selected = True
+            self.radio_flag = False
+            self.setBluetoothIconSelected()
+        elif self.current_index == 4:
+            self.auto_flag = False
+            self.combo_selected = False
+            self.manual_flag = False
+            self.bluetooth_selected = False
+            self.radio_flag = True
+            self.setRadioSelected()
 
     def update_button_1(self):
         # First update encoder position
@@ -856,17 +862,15 @@ class MainWindow(QMainWindow):
                 if self.button_action_pending == False and self.tracked_satellite is None:
                     print(f"Auto Mode Integration")
                     self.tracked_satellite = self.satellites[self.combo_box.currentIndex()]
-                    self.tracked_satellite = self.satellites[self.combo_box.currentIndex()]
 
                     self.auto_track_process = multiprocessing.Process(target=self.auto_tracking)
                     self.auto_track_process.start()
                     self.button_action_pending = True
-
-                    time.sleep(5)
+                    sleep(1)
 
                     if self.gpio.read_button() == True:
+                        self.tracked_satellite = None
                         self.button_action_process.terminate()
-
                     sleep(1)
 
 
@@ -874,6 +878,7 @@ class MainWindow(QMainWindow):
                     print("Auto mode Terminate")
                     self.tracked_satellite = None
                     self.auto_track_process.terminate()
+                    self.button_action_pending = True
                     sleep(1)
 
 
@@ -882,6 +887,21 @@ class MainWindow(QMainWindow):
                     print("Manual mode pending integration")
                     self.manual_encoder_control()
                     self.button_action_pending = True
+
+            elif self.bluetooth_selected:
+                if self.button_action_pending == False:
+                    self.startBluetoothServer()
+                    self.button_action_pending = True
+
+            elif self.radio_flag and self.button_action_pending == False:
+                print("Radio mode pending integration")
+                
+                if sat_freq.count(self.satellites[self.combo_box.currentIndex()].name) > 0:
+                    self.radio_process =  subprocess.Popen(['python3', '../radio/GNU Radio/Autocorrelation Voice Squelch/HAM/fm_rx.py', f"{sat_freq[self.combo_box.currentIndex().name]}"],
+                                   stdin=None,
+                                   stdout=None,
+                                   stderr=None)
+                self.button_action_pending = True
         else:
             # Button is released
             self.button_action_pending = False
