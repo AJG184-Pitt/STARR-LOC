@@ -796,25 +796,36 @@ class MainWindow(QMainWindow):
             self.combo_selected = False
             self.manual_flag = False
             self.bluetooth_selected = False
+            self.radio_flag = False
             self.setAutoIconSelected()
         elif self.current_index == 1:
             self.auto_flag = False
             self.combo_selected = True
             self.manual_flag = False
             self.bluetooth_selected = False
+            self.radio_flag = False
             self.setDropdownSelected()
         elif self.current_index == 2:
             self.auto_flaπ = False
             self.combo_selected = False
             self.manual_flag = True
             self.bluetooth_selected = False
+            self.radio_flag = False
             self.setManualIconSelected()
         elif self.current_index == 3:
             self.auto_flag = False
             self.combo_selected = False
             self.manual_flag = False
-        self.bluetooth_selected = True
-        self.setBluetoothIconSelected()
+            self.bluetooth_selected = True
+            self.radio_flag = False
+            self.setBluetoothIcon()
+        elif self.current_index == 4:
+            self.auto_flag = False
+            self.combo_selected = False
+            self.manual_flag = False
+            self.bluetooth_selected = False
+            self.radio_flag = True
+            self.setRadioSelected()
 
     def update_button_1(self):
         # First update encoder position
@@ -846,6 +857,10 @@ class MainWindow(QMainWindow):
                     print("Manual mode pending integration")
                     self.manual_encoder_control()
                     self.button_action_pending = True
+
+            elif self.bluetooth_flag:
+                if self.button_action_pending == False:
+                    self.startBluetoothServer()
         else:
             # Button is released
             self.button_action_pending = False
