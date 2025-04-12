@@ -328,10 +328,15 @@ class MainWindow(QMainWindow):
 
         # Labels for satellite information
         self.label1 = QLabel("Current Angle:")
+        self.label1.setStyleSheet("color: white")
         self.label2 = QLabel("Next Satellite Overhead Period:")
+        self.label2.setStyleSheet("color: white")
         self.label3 = QLabel("Current Overhead Duration:")
+        self.label3.setStyleSheet("color: white")
         self.label4 = QLabel("Max Angle:")
+        self.label4.setStyleSheet("color: white")
         self.label5 = QLabel("GPS Location:")
+        self.label5.setStyleSheet("color: white")
 
         edit_lines = [self.e1, self.e2, self.e3, self.e4, self.e5, self.e6]
 
