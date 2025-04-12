@@ -378,7 +378,7 @@ class MainWindow(QMainWindow):
 
         # Initialize gpio class object
         self.gpio = GpioSetup()
-        self.selected_labels = [0, 1, 2, 3]
+        self.selected_labels = [0, 1, 2, 3, 4]
         self.current_index = 0
 
         # Encoder checks
@@ -456,7 +456,7 @@ class MainWindow(QMainWindow):
 
             elif event.key() == Qt.Key.Key_F1:
                 
-                if sat_freq.count(self.satellites[self.combo_box.currentIndex()].name) > 0:
+                if self.satellites[self.combo_box.currentIndex()].name in sat_freq:
                     self.radio_process =  subprocess.Popen(['python3', '../radio/GNU Radio/Autocorrelation Voice Squelch/HAM/fm_rx.py', f"{sat_freq[self.combo_box.currentIndex().name]}"],
                                    stdin=None,
                                    stdout=None,
@@ -842,7 +842,7 @@ class MainWindow(QMainWindow):
             self.manual_flag = False
             self.bluetooth_selected = True
             self.radio_flag = False
-            self.setBluetoothIconSelected()
+            self.setBluetoothIcon()
         elif self.current_index == 4:
             self.auto_flag = False
             self.combo_selected = False
@@ -896,7 +896,7 @@ class MainWindow(QMainWindow):
             elif self.radio_flag and self.button_action_pending == False:
                 print("Radio mode pending integration")
                 
-                if sat_freq.count(self.satellites[self.combo_box.currentIndex()].name) > 0:
+                if self.satellites[self.combo_box.currentIndex()].name in sat_freq:
                     self.radio_process =  subprocess.Popen(['python3', '../radio/GNU Radio/Autocorrelation Voice Squelch/HAM/fm_rx.py', f"{sat_freq[self.combo_box.currentIndex().name]}"],
                                    stdin=None,
                                    stdout=None,
