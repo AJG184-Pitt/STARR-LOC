@@ -9,6 +9,10 @@
 # Author: adam-nichols
 # GNU Radio version: 3.10.11.0
 
+import sys
+
+sys.path.append("/usr/lib/python3/dist-packages/")
+
 from gnuradio import analog
 from gnuradio import audio
 from gnuradio import blocks
@@ -16,7 +20,7 @@ from gnuradio import digital
 from gnuradio import gr
 from gnuradio.filter import firdes
 from gnuradio.fft import window
-import sys
+
 import signal
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
