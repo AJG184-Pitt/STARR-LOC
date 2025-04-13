@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-ARG="$2"
+ARG="$1"
 
 source "/home/starrloc/miniconda3/etc/profile.d/conda.sh"
 conda activate base
