@@ -172,16 +172,31 @@ class MainWindow(QMainWindow):
         self.radio_image.setPixmap(pixmap4)
 
         # Labels for satellite information
-        self.label1 = QLabel("Current Angle:")
-        self.label1.setStyleSheet("color: white")
-        self.label2 = QLabel("Next Satellite Overhead Period:")
-        self.label2.setStyleSheet("color: white")
-        self.label3 = QLabel("Current Overhead Duration:")
-        self.label3.setStyleSheet("color: white")
-        self.label4 = QLabel("Max Angle:")
-        self.label4.setStyleSheet("color: white")
+        self.label1 = QLabel("Tracking Satellite:")
+        self.label1.setStyleSheet("""
+                                  color: white; 
+                                  font-size: 12pt
+                                  """)
+        self.label2 = QLabel("Current Angle:")
+        self.label2.setStyleSheet("""
+                                  color: white; 
+                                  font-size: 12pt
+                                  """)
+        self.label3 = QLabel("Next Satellite Overhead Period:")
+        self.label3.setStyleSheet("""
+                                  color: white; 
+                                  font-size: 12pt
+                                  """)
+        self.label4 = QLabel("Current Overhead Duration:")
+        self.label4.setStyleSheet("""
+                                  color: white; 
+                                  font-size: 12pt
+                                  """)
         self.label5 = QLabel("GPS Location:")
-        self.label5.setStyleSheet("color: white")
+        self.label5.setStyleSheet("""
+                                  color: white; 
+                                  font-size: 12pt
+                                  """)
 
         edit_lines = [self.e1, self.e2, self.e3, self.e4, self.e5, self.e6]
 
@@ -548,6 +563,7 @@ class MainWindow(QMainWindow):
 
     def sat_data(self, satellites, selected, observer, local_time):
         # Get data from the satellite object
+        e1_data = satellites[selected].name
         e2_data = satellites[selected].getAngleFrom(observer, local_time)
         
         e3_data = satellites[selected].nextOverhead(observer, local_time)
@@ -565,7 +581,7 @@ class MainWindow(QMainWindow):
         # e5_data = str(e5_data)
         
         # Pass satellite data into text boxes
-        self.e1.setText("Satellite")
+        self.e1.setText(e1_data)
         self.e2.setText(e2_data)
         self.e3.setText(e3_data)
         self.e4.setText(e4_data)
