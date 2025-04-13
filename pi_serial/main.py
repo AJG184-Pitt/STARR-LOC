@@ -2,7 +2,6 @@ from serial import Serial
 import time
 
 ser = Serial('/dev/ttyUSB0', 115200, timeout=1)
-time.sleep(10)
 
 data = "10 10\n"
 ser.write(data.encode())
