@@ -469,7 +469,7 @@ class MainWindow(QMainWindow):
                   #                 stderr=None)
 
                 
-                self.radio_process =  subprocess.Popen(['python3', '../radio/GNU Radio/Autocorrelation Voice Squelch/HAM/fm_rx.py', "147540000"],
+                self.radio_process = subprocess.Popen(['/path/to/gnuradio.sh', f"{sat_freq[self.combo_box.currentIndex().name]}"], 
                                    stdin=None,
                                    stdout=None,
                                    stderr=None)
