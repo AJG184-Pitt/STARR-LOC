@@ -827,14 +827,14 @@ class MainWindow(QMainWindow):
 
     def update_selection(self):
         # Update UI based on current_index
-        if self.current_index == 0:
+        if self.current_index == 1:
             self.auto_flag = True
             self.combo_selected = False
             self.manual_flag = False
             self.bluetooth_selected = False
             self.radio_flag = False
             self.setAutoIconSelected()
-        elif self.current_index == 1:
+        elif self.current_index == 0:
             self.auto_flag = False
             self.combo_selected = True
             self.manual_flag = False
