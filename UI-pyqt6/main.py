@@ -918,19 +918,21 @@ class MainWindow(QMainWindow):
 
     def sat_data(self, satellites, selected, observer, local_time):
 
+        utc_time = local_time.astimezone(pytz.utc)
+
         # Prioritize showing the tracked satellite information if it exists
         if self.tracked_satellite is not None:
             index = self.satellites.index(self.tracked_satellite)
             e1_data = satellites[index].name
-            e2_data = satellites[index].getAngleFrom(observer, local_time)
-            e3_data = satellites[index].nextOverhead(observer, local_time)
-            e4_data = satellites[index].overheadDuration(observer, local_time, next_overhead=e3_data)
+            e2_data = satellites[index].getAngleFrom(observer, utc_time)
+            e3_data = satellites[index].nextOverhead(observer, utc_time)
+            e4_data = satellites[index].overheadDuration(observer, utc_time, next_overhead=e3_data)
 
         else:
             e1_data = satellites[selected].name
-            e2_data = satellites[selected].getAngleFrom(observer, local_time)
-            e3_data = satellites[selected].nextOverhead(observer, local_time)
-            e4_data = satellites[selected].overheadDuration(observer, local_time, next_overhead=e3_data)
+            e2_data = satellites[selected].getAngleFrom(observer, utc_time)
+            e3_data = satellites[selected].nextOverhead(observer, utc_time)
+            e4_data = satellites[selected].overheadDuration(observer, utc_time, next_overhead=e3_data)
 
 
         e2_data = f"Azimuth: {e2_data[0]:.2f}, Elevation: {e2_data[1]:.2f}"
