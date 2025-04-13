@@ -469,7 +469,7 @@ class MainWindow(QMainWindow):
                   #                 stderr=None)
 
                 
-                self.radio_process = subprocess.Popen(['/path/to/gnuradio.sh', f"{147540000}"], 
+                self.radio_process = subprocess.Popen(['/gnuradio.sh', f"{147540000}"], 
                                    stdin=None,
                                    stdout=None,
                                    stderr=None)
