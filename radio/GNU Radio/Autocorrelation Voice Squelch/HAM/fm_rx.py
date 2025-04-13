@@ -22,13 +22,13 @@ from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 from gnuradio import iio
-import ece_1896_fm_rx_epy_block_0_0 as epy_block_0_0  # embedded python block
+import fm_rx_epy_block_0_0 as epy_block_0_0  # embedded python block
 import threading
 
 
 
 
-class ece_1896_fm_rx(gr.top_block):
+class fm_rx(gr.top_block):
 
     def __init__(self):
         gr.top_block.__init__(self, "ECE 1896 Voice Detection from NBFM", catch_exceptions=True)
@@ -38,7 +38,7 @@ class ece_1896_fm_rx(gr.top_block):
         # Variables
         ##################################################
         self.thresh = thresh = .5
-        self.rf_gain = rf_gain = 30
+        self.rf_gain = rf_gain = 40
         self.int_length = int_length = 8000
         self.carrier_freq = carrier_freq = int(sys.argv[1])
         self.audio_samp_rate = audio_samp_rate = 48000
@@ -49,7 +49,7 @@ class ece_1896_fm_rx(gr.top_block):
         # Blocks
         ##################################################
 
-        self.iio_pluto_source_0 = iio.fmcomms2_source_fc32('ip:192.168.2.20' if 'ip:192.168.2.20' else iio.get_pluto_uri(), [True, True], 32768)
+        self.iio_pluto_source_0 = iio.fmcomms2_source_fc32('ip:192.168.2.1' if 'ip:192.168.2.1' else iio.get_pluto_uri(), [True, True], 32768)
         self.iio_pluto_source_0.set_len_tag_key('packet_len')
         self.iio_pluto_source_0.set_frequency(carrier_freq)
         self.iio_pluto_source_0.set_samplerate(RF_samp_rate)
@@ -171,7 +171,7 @@ class ece_1896_fm_rx(gr.top_block):
 
 
 
-def main(top_block_cls=ece_1896_fm_rx, options=None):
+def main(top_block_cls=fm_rx, options=None):
     tb = top_block_cls()
 
     def sig_handler(sig=None, frame=None):
