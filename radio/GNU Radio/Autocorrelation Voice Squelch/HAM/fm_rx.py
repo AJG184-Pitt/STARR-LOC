@@ -44,7 +44,7 @@ class fm_rx(gr.top_block):
         self.thresh = thresh = .5
         self.rf_gain = rf_gain = 40
         self.int_length = int_length = 8000
-        self.carrier_freq = carrier_freq = int(147.540e6)
+        self.carrier_freq = carrier_freq = int(sys.argv[1])
         self.audio_samp_rate = audio_samp_rate = 48000
         self.audio_gain = audio_gain = 1
         self.RF_samp_rate = RF_samp_rate = 480000
