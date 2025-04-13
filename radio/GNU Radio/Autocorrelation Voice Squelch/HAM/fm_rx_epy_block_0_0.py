@@ -38,7 +38,7 @@ class save_mp3_on_trigger(gr.sync_block):
                 wf.setnchannels(1)
                 wf.setsampwidth(2)
                 wf.setframerate(self.sample_rate)
-                wf.writeframes(np.array(self.audio_buffer, dtype=np.int16).tobytes())
+                wf.writeframes(np.array(self.audio_buffer, dtype=np.int64).tobytes())
             
             audio = AudioSegment.from_wav(temp_wav)
             mp3_filename = temp_wav.replace(".wav", ".mp3")

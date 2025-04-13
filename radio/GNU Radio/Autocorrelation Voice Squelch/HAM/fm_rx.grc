@@ -778,7 +778,7 @@ blocks:
       \   temp_wav = self.filename\n            with wave.open(temp_wav, 'w') as wf:\n\
       \                wf.setnchannels(1)\n                wf.setsampwidth(2)\n  \
       \              wf.setframerate(self.sample_rate)\n                wf.writeframes(np.array(self.audio_buffer,\
-      \ dtype=np.int16).tobytes())\n            \n            audio = AudioSegment.from_wav(temp_wav)\n\
+      \ dtype=np.int64).tobytes())\n            \n            audio = AudioSegment.from_wav(temp_wav)\n\
       \            mp3_filename = temp_wav.replace(\".wav\", \".mp3\")\n         \
       \   audio.export(mp3_filename, format=\"mp3\")\n            os.remove(temp_wav)\
       \  # Delete temporary WAV file\n            print(f\"Saved recording: {mp3_filename}\"\
