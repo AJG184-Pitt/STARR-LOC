@@ -7,11 +7,7 @@
 # GNU Radio Python Flow Graph
 # Title: ECE 1896 Voice Detection from NBFM
 # Author: adam-nichols
-# GNU Radio version: 3.10.11.0
-
-import sys
-
-sys.path.append("/usr/lib/python3/dist-packages/")
+# GNU Radio version: 3.10.5.1
 
 from gnuradio import analog
 from gnuradio import audio
@@ -20,14 +16,13 @@ from gnuradio import digital
 from gnuradio import gr
 from gnuradio.filter import firdes
 from gnuradio.fft import window
-
+import sys
 import signal
 from argparse import ArgumentParser
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 from gnuradio import iio
 import fm_rx_epy_block_0_0 as epy_block_0_0  # embedded python block
-import threading
 
 
 
@@ -36,15 +31,14 @@ class fm_rx(gr.top_block):
 
     def __init__(self):
         gr.top_block.__init__(self, "ECE 1896 Voice Detection from NBFM", catch_exceptions=True)
-        self.flowgraph_started = threading.Event()
 
         ##################################################
         # Variables
         ##################################################
         self.thresh = thresh = .5
-        self.rf_gain = rf_gain = 40
+        self.rf_gain = rf_gain = -100
         self.int_length = int_length = 8000
-        self.carrier_freq = carrier_freq = int(sys.argv[1])
+        self.carrier_freq = carrier_freq = int(446e6)
         self.audio_samp_rate = audio_samp_rate = 48000
         self.audio_gain = audio_gain = 1
         self.RF_samp_rate = RF_samp_rate = 480000
@@ -88,7 +82,8 @@ class fm_rx(gr.top_block):
         	tau=(75e-6),
         	max_dev=5e3,
           )
-        self.analog_agc_xx_0 = analog.agc_cc((1e-4), .5, 1.0, 256000)
+        self.analog_agc_xx_0 = analog.agc_cc((1e-4), .5, 1.0)
+        self.analog_agc_xx_0.set_max_gain(256000)
 
 
         ##################################################
@@ -188,7 +183,6 @@ def main(top_block_cls=fm_rx, options=None):
     signal.signal(signal.SIGTERM, sig_handler)
 
     tb.start()
-    tb.flowgraph_started.set()
 
     try:
         input('Press Enter to quit: ')

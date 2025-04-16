@@ -354,7 +354,7 @@ class MainWindow(QMainWindow):
         self.e6.setFixedHeight(40)
 
         # Line edits and combo box
-        grid.addWidget(self.combo_box, 5, 0)
+        grid.addWidget(self.combo_box, 3, 0)
 
         grid.addWidget(self.label1, 0, 1, alignment=Qt.AlignmentFlag.AlignBottom)
         grid.addWidget(self.e1, 1, 1)
@@ -469,7 +469,7 @@ class MainWindow(QMainWindow):
                   #                 stderr=None)
 
                 
-                self.radio_process = subprocess.Popen(['bash', '/home/starrloc/Documents/STARR-LOC/UI-pyqt6/gnuradio.sh', "147540000"], 
+                self.radio_process = subprocess.Popen(['bash', '/home/starrloc/Documents/STARR-LOC/UI-pyqt6/gnuradio.sh', "145470000"], 
                                    stdin=None,
                                    stdout=None,
                                    stderr=None)
@@ -1016,6 +1016,7 @@ class MainWindow(QMainWindow):
         #if angle[1] > 0:
         #    self.label4.setText("Time Remaining Overhead:")
 
+
         with open("auto_tracking_doc.txt", "a") as file:
 
             while (1):
@@ -1027,18 +1028,19 @@ class MainWindow(QMainWindow):
                 angle = satellite.getAngleFrom(self.observer, current_time)
                 # Check if the satellite is overhead
                 if angle[1] > 0: 
-                    print(f"Satellite {satellite.name} is overhead at {current_time}", file=file)
-                    print(f"{angle[0]=} & {angle[1]=}", file=file)
                     # Send motor command to ESP32
-                    string = f"{angle[0]:.4f} {angle[1]:.4f} 5"
+                    string = f"{angle[0]:.4f} {angle[1]:.4f}"
                     self.ser.write(string.encode())
+
                 else:
                     print(f"Satellite {satellite.name} is not overhead at {current_time}", file=file)
                     self.tracked_satellite = None
                     self.sat_data(self.satellites, self.combo_box.currentIndex(), self.observer, datetime.datetime.now(pytz.timezone("US/Eastern")))
                     break
-
-                sleep(5)
+                
+                while self.ser.readline() != b"Done\n":
+                    sleep(0.01)
+                sleep(0.1)
 
 
 def main():
