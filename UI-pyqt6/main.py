@@ -1071,13 +1071,13 @@ class MainWindow(QMainWindow):
 
                 if angle[1] > 80:
                     print("Angle above 80 or below 20")
-                    string = f"{angle[0]:.4f} {angle[1]:.4f} 1"
+                    string = f"{angle[0]:.4f} {angle[1]:.4f}"
                     self.ser.write(string.encode())
                     local_time = local_time + datetime.timedelta(seconds=5)
 
                 if angle[1] < 20:
                     print("Angle below 20")
-                    string = f"{angle[0]:.4f} {angle[1]:.4f} 1"
+                    string = f"{angle[0]:.4f} {angle[1]:.4f}"
                     self.ser.write(string.encode())
                     local_time = local_time + datetime.timedelta(seconds=15)
                 
