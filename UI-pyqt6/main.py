@@ -463,6 +463,7 @@ class MainWindow(QMainWindow):
                 self.showMaximized()
             elif event.key() == Qt.Key.Key_F10:
                 self.demo_process = multiprocessing.Process(target=self.tracking_demo)
+                self.demo_process.start()
             elif event.key() == Qt.Key.Key_F11:
                 if self.demo_mode:
                     self.demo_process.terminate()
