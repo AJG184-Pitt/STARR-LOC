@@ -1064,6 +1064,7 @@ class MainWindow(QMainWindow):
         while (1):
 
             angle = sat.getAngleFrom(self.observer, local_time)
+            print("Angle: ", angle)
 
             if angle[1] > 0:
                 print("Angle above 0")
