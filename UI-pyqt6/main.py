@@ -462,17 +462,11 @@ class MainWindow(QMainWindow):
 
             elif event.key() == Qt.Key.Key_F1:
                 
-                #if self.satellites[self.combo_box.currentIndex()].name in sat_freq:
-                #self.radio_process =  subprocess.Popen(['python3', '../radio/GNU Radio/Autocorrelation Voice Squelch/HAM/fm_rx.py', f"{sat_freq[self.combo_box.currentIndex().name]}"],
-                 #                  stdin=None,
-                  #                 stdout=None,
-                  #                 stderr=None)
-
-                
-                self.radio_process =  subprocess.Popen(['python3', '../radio/GNU Radio/Autocorrelation Voice Squelch/HAM/fm_rx.py', "147540000"],
+                if self.satellites[self.combo_box.currentIndex()].name in sat_freq:
+                    self.radio_process =  subprocess.Popen(['python3', '../radio/GNU Radio/Autocorrelation Voice Squelch/HAM/fm_rx.py', f"{sat_freq[self.combo_box.currentIndex().name]}"],
                                    stdin=None,
                                    stdout=None,
-                                   stderr=None)
+                                   stderr=None)l
             
         
         # Pass the event to the default event filter
@@ -988,10 +982,9 @@ class MainWindow(QMainWindow):
             self.combo_box.setItemText(i, text)
 
         if self.tracked_satellite is not None:
-            pass
-            #e4_data = self.satellites[index].overheadDuration(self.observer, utc_time)
-            #e4_data = f"Minutes : {e4_data[0]}, Seconds: {e4_data[1]}"
-            #self.e4.setText(e4_data)
+            e4_data = self.satellites[index].overheadDuration(self.observer, utc_time)
+            e4_data = f"Minutes : {e4_data[0]}, Seconds: {e4_data[1]}"
+            self.e4.setText(e4_data)
         
 
     def reread_data(self, signum=None, frame=None):
@@ -1008,11 +1001,6 @@ class MainWindow(QMainWindow):
         Auto tracking loop
         """
         satellite = self.satellites[self.combo_box.currentIndex()]
-        #current_time = datetime.datetime.now(pytz.timezone("US/Eastern"))
-        #current_time = current_time.astimezone(pytz.utc)
-        #angle = satellite.getAngleFrom(self.observer, current_time)
-        #if angle[1] > 0:
-        #    self.label4.setText("Time Remaining Overhead:")
 
         with open("auto_tracking_doc.txt", "a") as file:
 

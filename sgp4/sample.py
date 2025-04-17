@@ -24,8 +24,6 @@ observer = Observer(lat=40.444, lon=-79.953, alt=300)
 et = pytz.timezone('US/Eastern')
 local_time = datetime.datetime.now(et)
 utc_time = local_time.astimezone(pytz.utc)
-#print(f"time now: {local_time}")
-#print(f"time utc: {utc_time}")
 
 
 r = satellites[0].getPosAtTime(utc_time)
