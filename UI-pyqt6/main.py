@@ -421,6 +421,8 @@ class MainWindow(QMainWindow):
         self.combo_box.clear()
         self.combo_box.addItems(options)
 
+        self.demo_mode = False
+
 
     def eventFilter(self, obj, event):
         # Check if the event is a key press event
@@ -1050,23 +1052,26 @@ class MainWindow(QMainWindow):
 
     def tracking_demo(self, signum=None, frame=None):
 
-        self.demo_mode = True
+        self.demo_mode = Trued
         #et = datetime.timezone("US/Eastern")
         local_time = datetime.datetime(2025, 4, 17, 22, 0, 40)
 
         sat = next((sat for sat in self.satellites if sat.name == "AAUSAT2"), None)
+
+        print("Reached While Loop")
 
         while (1):
 
             angle = sat.getAngleFrom(self.observer, local_time)
 
             if angle[1] > 0:
+                print("Angle above 0")
                 string = f"{angle[0]:.4f} {angle[1]:.4f}"
                 self.ser.write(string.encode())
                 local_time = local_time + datetime.timedelta(seconds=15)
 
             else:
-                demo_mode = False
+                self.demo_mode = False
                 break
 
             while self.ser.readline() != b"Done\n":
