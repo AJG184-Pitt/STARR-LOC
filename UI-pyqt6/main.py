@@ -1051,14 +1051,14 @@ class MainWindow(QMainWindow):
     def tracking_demo(self, signum=None, frame=None):
 
         self.demo_mode = True
-        et = datetime.timezone("US/Eastern")
-        local_time = datetime.datetime.now(et)
+        #et = datetime.timezone("US/Eastern")
+        local_time = datetime.datetime(2025, 4, 17, 22, 0, 40)
 
         sat = next((sat for sat in self.satellites if sat.name == "AAUSAT2"), None)
 
         while (1):
 
-            angle = self.getAngleFrom(self.observer, local_time)
+            angle = sat.getAngleFrom(self.observer, local_time)
 
             if angle[1] > 0:
                 string = f"{angle[0]:.4f} {angle[1]:.4f}"
