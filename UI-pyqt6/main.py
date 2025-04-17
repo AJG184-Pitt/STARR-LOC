@@ -1058,6 +1058,8 @@ class MainWindow(QMainWindow):
         local_time = datetime.datetime(2025, 4, 17, 18, 00, 40)
         local_time = local_time.astimezone(pytz.utc)
 
+        self.ser.write("-50 0".encode())
+
         sat = next((sat for sat in self.satellites if sat.name == "AAUSAT2"), None)
 
         print("Reached While Loop")
