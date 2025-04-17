@@ -1053,7 +1053,7 @@ class MainWindow(QMainWindow):
 
     def tracking_demo(self, signum=None, frame=None):
 
-        self.demo_mode = Trued
+        self.demo_mode = True
         #et = datetime.timezone("US/Eastern")
         local_time = datetime.datetime(2025, 4, 17, 22, 0, 40)
 
