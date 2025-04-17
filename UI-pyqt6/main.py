@@ -1055,7 +1055,7 @@ class MainWindow(QMainWindow):
 
         self.demo_mode = True
         #et = datetime.timezone("US/Eastern")
-        local_time = datetime.datetime(2025, 4, 17, 22, 0, 40)
+        local_time = datetime.datetime(2025, 4, 17, 18, 0, 40)
 
         sat = next((sat for sat in self.satellites if sat.name == "AAUSAT2"), None)
 
