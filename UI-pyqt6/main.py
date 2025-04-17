@@ -459,6 +459,12 @@ class MainWindow(QMainWindow):
                 self.showFullScreen()
             elif event.key() == Qt.Key.Key_F9:
                 self.showMaximized()
+            elif event.key() == Qt.Key.Key_F10:
+                self.demo_process = multiprocessing.Process(target=self.tracking_demo)
+            elif event.key() == Qt.Key.Key_F11:
+                if self.demo_mode:
+                    self.demo_process.terminate()
+
 
             elif event.key() == Qt.Key.Key_F1:
                 
@@ -1041,6 +1047,33 @@ class MainWindow(QMainWindow):
                 while self.ser.readline() != b"Done\n":
                     sleep(0.01)
                 sleep(0.1)
+
+    def tracking_demo(self, signum=None, frame=None):
+
+        self.demo_mode = True
+        et = datetime.timezone("US/Eastern")
+        local_time = datetime.datetime.now(et)
+
+        sat = next((sat for sat in self.satellites if sat.name == "AAUSAT2"), None)
+
+        while (1):
+
+            angle = self.getAngleFrom(self.observer, local_time)
+
+            if angle[1] > 0:
+                string = f"{angle[0]:.4f} {angle[1]:.4f}"
+                self.ser.write(string.encode())
+                local_time = local_time + datetime.timedelta(seconds=15)
+
+            else:
+                demo_mode = False
+                break
+
+            while self.ser.readline() != b"Done\n":
+                sleep(0.01)
+            sleep(0.1)
+
+
 
 
 def main():
